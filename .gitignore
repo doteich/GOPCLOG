@@ -1,2 +1,2 @@
 *.exe
-/config/config*
+*config.json
