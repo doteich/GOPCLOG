@@ -1,0 +1,5 @@
+package certgen
+
+func GenerateCert() {
+
+}

@@ -10,9 +10,7 @@ import (
 	"os/signal"
 
 	opcsetup "github.com/doteich/OPC-UA-Logger/setup"
-	"github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/monitor"
-	"github.com/gopcua/opcua/ua"
 )
 
 func main() {
@@ -32,16 +30,7 @@ func main() {
 
 	ep := opcsetup.ValidateEndpoint(ctx, config.ClientConfig.Url, config.ClientConfig.SecurityPolicy, config.ClientConfig.SecurityMode)
 
-	connectionParams := []opcua.Option{
-		opcua.SecurityPolicy(config.ClientConfig.SecurityPolicy),
-		opcua.SecurityModeString(config.ClientConfig.SecurityMode),
-		opcua.AuthUsername(config.ClientConfig.Username, config.ClientConfig.Password),
-		opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeUserName),
-	}
-
-	/* if config.ClientConfig.Password != "" {
-		connectionParams = append(connectionParams, opcua.AuthUsername(config.ClientConfig.Username, config.ClientConfig.Password))
-	} */
+	connectionParams := opcsetup.SetClientOptions(&config, ep)
 
 	client := opcsetup.CreateClientConnection(config.ClientConfig.Url, connectionParams)
 	err := client.Connect(ctx)

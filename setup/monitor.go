@@ -34,6 +34,29 @@ func ValidateEndpoint(ctx context.Context, endpoint string, policy string, mode 
 
 }
 
+func SetClientOptions(config *Config, ep *ua.EndpointDescription) []opcua.Option {
+
+	// basic params
+	connectionParams := []opcua.Option{
+		opcua.SecurityPolicy(config.ClientConfig.SecurityPolicy),
+		opcua.SecurityModeString(config.ClientConfig.SecurityMode),
+	}
+
+	switch config.ClientConfig.AuthType {
+	case "User & Password":
+		connectionParams = append(connectionParams, opcua.AuthUsername(config.ClientConfig.Username, config.ClientConfig.Password))
+		connectionParams = append(connectionParams, opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeUserName))
+	case "Certificate":
+		//connectionParams = append(connectionParams, opcua.AuthCertificate())
+		connectionParams = append(connectionParams, opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeCertificate))
+	default:
+		connectionParams = append(connectionParams, opcua.AuthAnonymous())
+		connectionParams = append(connectionParams, opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous))
+	}
+
+	return connectionParams
+}
+
 func CreateClientConnection(ep string, options []opcua.Option) *opcua.Client {
 
 	return opcua.NewClient(ep, options...)
@@ -68,7 +91,7 @@ func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interva
 
 				id := msg.NodeID.String()
 				fmt.Println(id)
-				PostLoggedData(id, msg.Value.Value(), msg.SourceTimestamp)
+				//PostLoggedData(id, msg.Value.Value(), msg.SourceTimestamp)
 				log.Printf("[channel ] sub=%d ts=%s node=%s value=%v", sub.SubscriptionID(), msg.SourceTimestamp.UTC().Format(time.RFC3339), msg.NodeID, msg.Value.Value())
 			}
 			time.Sleep(lag)
