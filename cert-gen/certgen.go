@@ -105,12 +105,12 @@ func createCertificate(ca *x509.Certificate, caCertPEM *bytes.Buffer, caPrivateK
 		os.Exit(1)
 	}
 
-	certPEMFile.Close()
-
 	pem.Encode(certPEMFile, &pem.Block{
 		Type:  "CERTIFICATE",
 		Bytes: certBytes,
 	})
+
+	certPEMFile.Close()
 
 	certPrivateKey, err := os.Create("./certs/private_key.pem")
 
