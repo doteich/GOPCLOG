@@ -15,9 +15,25 @@ import (
 )
 
 func GeneratePEMFiles() {
-	ca := createCA()
-	caCertPEM, caPrivateKeyPEM := createCACert(ca)
-	createCertificate(ca, caCertPEM, caPrivateKeyPEM)
+
+	_, err0 := os.Stat("./certs")
+
+	if err0 != nil {
+		os.Mkdir("certs", 0777)
+	}
+
+	_, err1 := os.Stat("./certs/cert.pem")
+	_, err2 := os.Stat("./certs/private_key.pem")
+
+	if err1 == nil && err2 == nil {
+		fmt.Println("Cert or private key already exists")
+		return
+	} else {
+		fmt.Println("Generating new cert & private key")
+		ca := createCA()
+		// caCertPEM, caPrivateKeyPEM := createCACert(ca) // Backup for create PEM Files for CA (Cert & Public Key)
+		createCertificate(ca)
+	}
 
 }
 
@@ -70,7 +86,7 @@ func createCACert(ca *x509.Certificate) (*bytes.Buffer, *bytes.Buffer) {
 	return caPEM, caPrivateKeyPEM
 }
 
-func createCertificate(ca *x509.Certificate, caCertPEM *bytes.Buffer, caPrivateKeyPEM *bytes.Buffer) {
+func createCertificate(ca *x509.Certificate) {
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(1001),
 		Subject: pkix.Name{
