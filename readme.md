@@ -33,7 +33,7 @@
 ```
 ### Roadmap 🚀
 - [ ] Docker/Kubernetes Integration
-- [o] Cert generation
+- [i] Cert generation
 - [ ] Support for Websockets
 - [ ] Support for gRPC
 - [ ] Logging to a metrics endpoint `/metrics`
