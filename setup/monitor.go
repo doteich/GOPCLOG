@@ -40,6 +40,8 @@ func SetClientOptions(config *Config, ep *ua.EndpointDescription) []opcua.Option
 	connectionParams := []opcua.Option{
 		opcua.SecurityPolicy(config.ClientConfig.SecurityPolicy),
 		opcua.SecurityModeString(config.ClientConfig.SecurityMode),
+		opcua.CertificateFile("./certs/cert.pem"),
+		opcua.PrivateKeyFile("./certs/private_key.pem"),
 	}
 
 	switch config.ClientConfig.AuthType {

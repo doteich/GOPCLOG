@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"net/url"
 	"os"
 	"time"
 )
@@ -87,6 +88,19 @@ func createCACert(ca *x509.Certificate) (*bytes.Buffer, *bytes.Buffer) {
 }
 
 func createCertificate(ca *x509.Certificate) {
+
+	hostName, err := os.Hostname()
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	u, err := url.Parse(hostName)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(1001),
 		Subject: pkix.Name{
@@ -98,6 +112,7 @@ func createCertificate(ca *x509.Certificate) {
 		NotBefore:    time.Now(),
 		NotAfter:     time.Now().AddDate(10, 0, 0),
 		SubjectKeyId: []byte{1, 2, 3, 4, 6},
+		URIs:         []*url.URL{u},
 		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
 		KeyUsage:     x509.KeyUsageDigitalSignature,
 	}

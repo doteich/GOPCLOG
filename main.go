@@ -1,60 +1,62 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"sync"
+	"time"
 
 	certgen "github.com/doteich/OPC-UA-Logger/cert-gen"
-	//opcsetup "github.com/doteich/OPC-UA-Logger/setup"
-	//"github.com/gopcua/opcua/monitor"
+	opcsetup "github.com/doteich/OPC-UA-Logger/setup"
+	"github.com/gopcua/opcua/monitor"
 )
 
 func main() {
 	certgen.GeneratePEMFiles()
 
-	/*
-		config := opcsetup.SetConfig()
+	config := opcsetup.SetConfig()
 
-		signalCh := make(chan os.Signal, 1)
-		signal.Notify(signalCh, os.Interrupt)
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, os.Interrupt)
 
-		ctx, cancel := context.WithCancel(context.Background())
-		defer cancel()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-		go func() {
-			<-signalCh
-			println()
-			cancel()
-		}()
+	go func() {
+		<-signalCh
+		println()
+		cancel()
+	}()
 
+	ep := opcsetup.ValidateEndpoint(ctx, config.ClientConfig.Url, config.ClientConfig.SecurityPolicy, config.ClientConfig.SecurityMode)
 
+	connectionParams := opcsetup.SetClientOptions(&config, ep)
 
-		ep := opcsetup.ValidateEndpoint(ctx, config.ClientConfig.Url, config.ClientConfig.SecurityPolicy, config.ClientConfig.SecurityMode)
+	client := opcsetup.CreateClientConnection(config.ClientConfig.Url, connectionParams)
+	err := client.Connect(ctx)
 
-		connectionParams := opcsetup.SetClientOptions(&config, ep)
+	if err != nil {
+		fmt.Println(err)
+	}
 
-		client := opcsetup.CreateClientConnection(config.ClientConfig.Url, connectionParams)
-		err := client.Connect(ctx)
+	defer client.CloseSessionWithContext(ctx)
 
-		if err != nil {
-			panic(err)
-		}
+	nodeMonitor, err := monitor.NewNodeMonitor(client)
 
-		defer client.CloseSessionWithContext(ctx)
+	if err != nil {
+		panic("Failed to setup monitor")
+	}
 
-		nodeMonitor, err := monitor.NewNodeMonitor(client)
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
 
-		if err != nil {
-			panic("Failed to setup monitor")
-		}
+	go opcsetup.MonitorItems(ctx, nodeMonitor, time.Duration(config.LoggerConfig.Interval*1000000000), 1000, wg, config.Nodes)
 
-		wg := &sync.WaitGroup{}
-		wg.Add(1)
+	<-ctx.Done()
+	defer ShowDone()
 
-		go opcsetup.MonitorItems(ctx, nodeMonitor, time.Duration(config.LoggerConfig.Interval*1000000000), 1000, wg, config.Nodes)
-
-		<-ctx.Done()
-		defer ShowDone()
-	*/
 }
 
 func ShowDone() {
