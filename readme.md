@@ -33,7 +33,7 @@
 ```
 ### Roadmap 🚀
 - [ ] Docker/Kubernetes Integration
-- :small_blue_diamond: Cert generation
+- [ ] Cert generation (:small_blue_diamond: works but needs further testing)
 - [ ] Support for Websockets
 - [ ] Support for gRPC
 - [ ] Logging to a metrics endpoint `/metrics`
