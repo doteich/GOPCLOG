@@ -8,11 +8,13 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-type MetricsObject struct {
-	Namespace   string
-	MetricsType string
-	Name        string
-}
+var (
+	gauge = promauto.NewGaugeVec(prometheus.GaugeOpts{Namespace: "newNamespace", Name: "custom_gauge_metric", Help: "New Gauge for collecting gopclog gauge metrics"}, []string{"NodeId", "NodeName"})
+)
+
+var (
+	counter = promauto.NewCounterVec(prometheus.CounterOpts{Namespace: "newNamespace", Name: "custom_counter_metric", Help: "New Gauge for collecting gopclog gauge metrics"}, []string{"NodeId", "NodeName"})
+)
 
 func ExposeMetrics() {
 	go registerCustomMetrics()
@@ -22,9 +24,9 @@ func ExposeMetrics() {
 }
 
 func registerCustomMetrics() {
-	gauge := promauto.NewGaugeVec(prometheus.GaugeOpts{Namespace: "newNamespace", Name: "custom_gauge_metric", Help: "New Gauge for collecting gopclog gauge metrics"}, []string{"tag", "name"})
-	counter := promauto.NewCounterVec(prometheus.CounterOpts{Namespace: "newNamespace", Name: "custom_gauge_metric", Help: "New Gauge for collecting gopclog gauge metrics"}, []string{"tag", "name"})
-	prometheus.Register(gauge)
-	prometheus.Register(counter)
+	setMetricsValue("gauge", "test", "tagtest", 10.00)
+}
 
+func setMetricsValue(MetricsType string, Name string, Tag string, value float64) {
+	gauge.WithLabelValues(Tag, Name).Set(value)
 }
