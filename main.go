@@ -9,13 +9,15 @@ import (
 	"time"
 
 	certgen "github.com/doteich/OPC-UA-Logger/cert-gen"
+	"github.com/doteich/OPC-UA-Logger/exporter"
 	opcsetup "github.com/doteich/OPC-UA-Logger/setup"
+
 	"github.com/gopcua/opcua/monitor"
 )
 
 func main() {
 	certgen.GeneratePEMFiles()
-
+	go exporter.ExposeMetrics()
 	config := opcsetup.SetConfig()
 
 	signalCh := make(chan os.Signal, 1)

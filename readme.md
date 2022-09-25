@@ -1,4 +1,4 @@
-# GOPCLOG
+# gOPCLOG
 
 `GOPCLOG` is a GO based OPC-UA Logger, which tracks tag value changes based on OPC-UA subscriptions and forwards them through a various channels (check roadmap) 
 
