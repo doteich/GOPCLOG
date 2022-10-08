@@ -40,8 +40,11 @@ func SetClientOptions(config *Config, ep *ua.EndpointDescription) []opcua.Option
 	connectionParams := []opcua.Option{
 		opcua.SecurityPolicy(config.ClientConfig.SecurityPolicy),
 		opcua.SecurityModeString(config.ClientConfig.SecurityMode),
-		opcua.CertificateFile("./certs/cert.pem"),
-		opcua.PrivateKeyFile("./certs/private_key.pem"),
+	}
+
+	if config.ClientConfig.SecurityMode != "None" || config.ClientConfig.SecurityPolicy != "None" {
+		connectionParams = append(connectionParams, opcua.CertificateFile("./certs/cert.pem"))
+		connectionParams = append(connectionParams, opcua.PrivateKeyFile("./certs/private_key.pem"))
 	}
 
 	switch config.ClientConfig.AuthType {
@@ -93,6 +96,8 @@ func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interva
 
 				id := msg.NodeID.String()
 				fmt.Println(id)
+
+				go PublishData(id, msg.Value.Value(), msg.SourceTimestamp)
 				//PostLoggedData(id, msg.Value.Value(), msg.SourceTimestamp)
 				log.Printf("[channel ] sub=%d ts=%s node=%s value=%v", sub.SubscriptionID(), msg.SourceTimestamp.UTC().Format(time.RFC3339), msg.NodeID, msg.Value.Value())
 			}

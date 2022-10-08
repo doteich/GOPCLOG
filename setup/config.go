@@ -16,14 +16,22 @@ type ClientConfig struct {
 	Username       string `mapstructure:"username"`
 	Password       string `mapstructure:"password"`
 	Node           string `mapstructure:"node"`
+	GenerateCert   bool   `mapstructure:"autoGenCert"`
 }
 type NodeObject struct {
-	NodeId   string `mapstructure:"nodeId"`
-	NodeName string `mapstructure:"name"`
+	NodeId          string `mapstructure:"nodeId"`
+	NodeName        string `mapstructure:"name"`
+	DataTypeId      int    `mapstructure:"dataTypeId"`
+	DataType        string `mapstructure:"dataType"`
+	ExposeAsMetrics bool   `mapstructure:"exposeAsMetric"`
+	MetricsType     string `mapstructure:"metricsType"`
 }
 type LoggerConfig struct {
-	Interval int    `mapstructure:"subInterval"`
-	Name     string `mapstructure:"name"`
+	Interval       int    `mapstructure:"subInterval"`
+	Name           string `mapstructure:"name"`
+	TargetURL      string `mapstructure:"targetURL"`
+	MetricsEnabled bool   `mapstructure:"metricsEnabled"`
+	BackupEnabled  bool   `mapstructure:"backup"`
 }
 
 func SetConfig() Config {

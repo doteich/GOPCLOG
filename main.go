@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"time"
 
@@ -16,9 +17,23 @@ import (
 )
 
 func main() {
-	certgen.GeneratePEMFiles()
-	go exporter.ExposeMetrics()
+
 	config := opcsetup.SetConfig()
+
+	if config.ClientConfig.GenerateCert {
+		certgen.GeneratePEMFiles()
+	}
+
+	if config.LoggerConfig.MetricsEnabled {
+
+		namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
+
+		go exporter.ExposeMetrics(namespace)
+	}
+
+	if config.LoggerConfig.BackupEnabled {
+		exporter.InitLogs()
+	}
 
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt)
