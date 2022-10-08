@@ -1,3 +1,4 @@
+**/tmp
 *.exe
 *config.json
 *.pem
