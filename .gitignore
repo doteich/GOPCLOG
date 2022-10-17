@@ -1,5 +1,5 @@
-**/tmp
 *.exe
 *config.json
 *.pem
 *.txt
+*log.json
