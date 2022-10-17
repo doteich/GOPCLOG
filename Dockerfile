@@ -11,4 +11,3 @@ WORKDIR /root/
 COPY --from=build ./app ./
 COPY --from=build /gopclogs ./
 CMD ["./gopclogs"] 
-

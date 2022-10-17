@@ -25,16 +25,13 @@ func main() {
 	}
 
 	exporter.InitRoutes(config.LoggerConfig.TargetURL, config.LoggerConfig.TargetURL)
+	exporter.InitLogs()
 
 	if config.LoggerConfig.MetricsEnabled {
 
 		namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
 
 		go exporter.ExposeMetrics(namespace)
-	}
-
-	if config.LoggerConfig.BackupEnabled {
-		exporter.InitLogs()
 	}
 
 	signalCh := make(chan os.Signal, 1)
