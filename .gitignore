@@ -3,3 +3,4 @@
 *.pem
 *.txt
 *log.json
+/tmp
