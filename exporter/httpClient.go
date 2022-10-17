@@ -10,8 +10,13 @@ import (
 	"go.uber.org/zap"
 )
 
+var path string
+var backupPath string
+
+/*
 const path string = "http://localhost:3001/log"          // Main Path for setting http calls
 const backupPath string = "http://localhost:3001/backup" // Route if main path is not reachable
+*/
 
 type Payload struct {
 	NodeId    string      `json:"nodeid"`
@@ -20,6 +25,11 @@ type Payload struct {
 	Timestamp time.Time   `json:"timestamp"`
 	LogName   string      `json:"logName"`
 	Server    string      `json:"server"`
+}
+
+func InitRoutes(p string, b string) {
+	path = p
+	backupPath = b
 }
 
 func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp time.Time, logName string, server string) {

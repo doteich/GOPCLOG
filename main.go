@@ -24,6 +24,8 @@ func main() {
 		certgen.GeneratePEMFiles()
 	}
 
+	exporter.InitRoutes(config.LoggerConfig.TargetURL, config.LoggerConfig.TargetURL)
+
 	if config.LoggerConfig.MetricsEnabled {
 
 		namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
