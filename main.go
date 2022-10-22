@@ -12,7 +12,6 @@ import (
 	certgen "github.com/doteich/OPC-UA-Logger/cert-gen"
 	"github.com/doteich/OPC-UA-Logger/exporter"
 	opcsetup "github.com/doteich/OPC-UA-Logger/setup"
-
 	"github.com/gopcua/opcua/monitor"
 )
 
@@ -24,7 +23,7 @@ func main() {
 		certgen.GeneratePEMFiles()
 	}
 
-	exporter.InitRoutes(config.LoggerConfig.TargetURL, config.LoggerConfig.TargetURL)
+	exporter.InitRoutes(config.LoggerConfig.TargetURL)
 	exporter.InitLogs()
 
 	if config.LoggerConfig.MetricsEnabled {
@@ -33,6 +32,8 @@ func main() {
 
 		go exporter.ExposeMetrics(namespace)
 	}
+
+	//exporter.ReadLogFile()
 
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt)

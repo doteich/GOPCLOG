@@ -11,12 +11,6 @@ import (
 )
 
 var path string
-var backupPath string
-
-/*
-const path string = "http://localhost:3001/log"          // Main Path for setting http calls
-const backupPath string = "http://localhost:3001/backup" // Route if main path is not reachable
-*/
 
 type Payload struct {
 	NodeId    string      `json:"nodeid"`
@@ -27,9 +21,8 @@ type Payload struct {
 	Server    string      `json:"server"`
 }
 
-func InitRoutes(p string, b string) {
+func InitRoutes(p string) {
 	path = p
-	backupPath = b
 }
 
 func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp time.Time, logName string, server string) {
@@ -55,23 +48,15 @@ func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp
 	resp, err := client.Do(req)
 
 	if err != nil {
-		Logs.Error("Unable to reach "+path, zap.ByteString("payload", jsonPayload))
+
+		Buffer.Error("Failed to reach "+path, zap.Any("payload", &newPayload))
+		Logs.Error("Connection refused for " + path)
+
 	} else {
 		statusCode := resp.StatusCode
-
 		if statusCode > 399 {
-			req, err := http.NewRequest("POST", backupPath, bytes.NewBuffer(jsonPayload))
-			if err != nil {
-				fmt.Println(err)
-			}
-			req.Header.Set("Content-Type", "application/json")
-			resp, err := client.Do(req)
-
-			if err != nil {
-				fmt.Println(err)
-			} else {
-				fmt.Println(resp)
-			}
+			Buffer.Error("Target returned a bad response: "+fmt.Sprint(statusCode), zap.Any("payload", &newPayload))
+			Logs.Error("Target returned a bad response: " + fmt.Sprint(statusCode))
 
 		}
 		defer resp.Body.Close()
