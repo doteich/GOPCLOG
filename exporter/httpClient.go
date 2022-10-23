@@ -12,6 +12,14 @@ import (
 
 var path string
 
+const retryThreshold uint8 = 10
+
+var numberSuccessfulMessages uint8 = 0
+
+var bufferSize int = 0
+
+var retryInProgress bool = false
+
 type Payload struct {
 	NodeId    string      `json:"nodeid"`
 	NodeName  string      `json:"nodeName"`
@@ -47,18 +55,31 @@ func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp
 
 	resp, err := client.Do(req)
 
+	fmt.Println("Buffersize:" + fmt.Sprint(bufferSize) + "numberSuccessfulMessages:" + fmt.Sprint(numberSuccessfulMessages) + "RetryInProgress:" + fmt.Sprint(retryInProgress))
+
 	if err != nil {
 
 		Buffer.Error("Failed to reach "+path, zap.Any("payload", &newPayload))
+		bufferSize += 1
+		numberSuccessfulMessages = 0
 		Logs.Error("Connection refused for " + path)
 
 	} else {
 		statusCode := resp.StatusCode
 		if statusCode > 399 {
 			Buffer.Error("Target returned a bad response: "+fmt.Sprint(statusCode), zap.Any("payload", &newPayload))
+			bufferSize += 1
+			numberSuccessfulMessages = 0
 			Logs.Error("Target returned a bad response: " + fmt.Sprint(statusCode))
 
 		}
+
+		numberSuccessfulMessages += 1
+
+		if numberSuccessfulMessages > retryThreshold && bufferSize > 0 && !retryInProgress {
+			go Resend()
+		}
+
 		defer resp.Body.Close()
 	}
 
