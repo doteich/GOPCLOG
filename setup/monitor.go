@@ -98,8 +98,6 @@ func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interva
 				fmt.Println(id)
 
 				go PublishData(id, msg.Value.Value(), msg.SourceTimestamp)
-				//PostLoggedData(id, msg.Value.Value(), msg.SourceTimestamp)
-				log.Printf("[channel ] sub=%d ts=%s node=%s value=%v", sub.SubscriptionID(), msg.SourceTimestamp.UTC().Format(time.RFC3339), msg.NodeID, msg.Value.Value())
 			}
 			time.Sleep(lag)
 		}
