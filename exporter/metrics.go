@@ -16,7 +16,7 @@ func ExposeMetrics(namespace string) {
 
 	custom_gauge = promauto.NewGaugeVec(prometheus.GaugeOpts{Namespace: namespace, Name: "custom_gauge_metric", Help: "Metric for collecting gopclog gauge type tag values"}, []string{"NodeId", "NodeName"})
 	custom_counter = promauto.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Name: "custom_counter_metric", Help: "Metric for collecting gopclog counter type tag values"}, []string{"NodeId", "NodeName"})
-	failed_requests = promauto.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Name: "number_failed_request", Help: "Metric for collecting gopclog number of failed request to the specified target URL"}, []string{"NodeId", "NodeName"})
+	failed_requests = promauto.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Name: "number_failed_request", Help: "Metric for collecting gopclog number of failed request to the specified target URL"}, []string{"url"})
 
 	http.Handle("/metrics", promhttp.Handler())
 	http.ListenAndServe(":4444", nil)

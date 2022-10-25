@@ -19,8 +19,10 @@ func Resend() {
 	for _, obj := range messages {
 		payload := obj.Payload
 		PostLoggedData(payload.NodeId, payload.NodeName, payload.Value, payload.Timestamp, payload.LogName, payload.Server)
+		failed_requests.WithLabelValues(path).Add(-1)
 	}
 	bufferSize = 0
+
 	retryInProgress = false
 
 }

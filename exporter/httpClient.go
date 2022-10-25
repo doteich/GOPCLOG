@@ -55,13 +55,12 @@ func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp
 
 	resp, err := client.Do(req)
 
-	fmt.Println("Buffersize:" + fmt.Sprint(bufferSize) + "numberSuccessfulMessages:" + fmt.Sprint(numberSuccessfulMessages) + "RetryInProgress:" + fmt.Sprint(retryInProgress))
-
 	if err != nil {
 
 		Buffer.Error("Failed to reach "+path, zap.Any("payload", &newPayload))
 		bufferSize += 1
 		numberSuccessfulMessages = 0
+		failed_requests.WithLabelValues(path).Inc()
 		Logs.Error("Connection refused for " + path)
 
 	} else {
@@ -70,6 +69,7 @@ func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp
 			Buffer.Error("Target returned a bad response: "+fmt.Sprint(statusCode), zap.Any("payload", &newPayload))
 			bufferSize += 1
 			numberSuccessfulMessages = 0
+			failed_requests.WithLabelValues(path).Inc()
 			Logs.Error("Target returned a bad response: " + fmt.Sprint(statusCode))
 
 		}
