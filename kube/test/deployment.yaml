@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: metacontroller 
+  name: gopclogs-operator
+spec:
+  selector:
+    matchLabels:
+      app: gopclogs-operator
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: gopclogs-operator
+    spec:
+      containers:
+      - name: gopclogs-operator
+        image: cinderstries/gopclogs-operator
+        ports:
+        - containerPort: 4900
