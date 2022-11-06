@@ -1,0 +1,156 @@
+apiVersion: v1
+items:
+- apiVersion: v1
+  data:
+    ca.crt: |
+      -----BEGIN CERTIFICATE-----
+      MIIC/jCCAeagAwIBAgIBADANBgkqhkiG9w0BAQsFADAVMRMwEQYDVQQDEwprdWJl
+      cm5ldGVzMB4XDTIyMTAxODE3MzIxNFoXDTMyMTAxNTE3MzIxNFowFTETMBEGA1UE
+      AxMKa3ViZXJuZXRlczCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAMRv
+      5B7ITgLCRGL3fY+J9T3nilp9afLmue3F+aoHZTFCi4BBTUyyod5Y1pG5IwYHfwb8
+      InAUr9mOTZHUPZUd6ybygMArwQHTpHK/axr8mOymHjy4W8HRTZl1oUy4N+GX+PRK
+      hP9gYsJBv+v4KwxFWQOHk5RarO+IOaqrR4q2Xdf4aCJ2U2+8t3u73TCzxfxforbF
+      rcXEO6R/Mz86WqALFgaO1RFYTrbId1pe61aBXRmJkQJIuR/TgB4eQlVZUW1shF2G
+      4ZmfCAn2PZk+rgnKa38wYXPSSSpCwtX2YZP5Zzq2vNRF01URQUnufEK3BQlvLLkC
+      ZDd4eTSG+WHeQI1afOcCAwEAAaNZMFcwDgYDVR0PAQH/BAQDAgKkMA8GA1UdEwEB
+      /wQFMAMBAf8wHQYDVR0OBBYEFGxKtA+lyRI+ItKByq5edBlT58CjMBUGA1UdEQQO
+      MAyCCmt1YmVybmV0ZXMwDQYJKoZIhvcNAQELBQADggEBAFwuHGHVMhJ2mHZnCf0q
+      7V/bccnUUa9wU52pPuc2m3rdvR+4u2VZCRRCqdHVZqZLE3cK2JzWywW/9OxeEq8u
+      n6x+UBHiI7LsUaBrS5aVywUvVePjdmEtRA6olWxF4utf6pC6/7LNV50JC/PR+Ak9
+      PW6lvTDwiv1hFmPzYkdOajIxPa0W0hE1jzZXPmJqWMfExdvvIEQ9/JiKHRH+tLoh
+      zHaEbRdGS7VQ2YerRzVjUUXikTE3OfX/XDi/5R7b8WqNDrRxW19ZRZ+K5Oy0IlCg
+      fbh6SvKC/hid44C/9Zx6SIwxAVJDqYubhIUMnihcsFR3nEnd92Qcozh6QzKAkzTM
+      xJc=
+      -----END CERTIFICATE-----
+  kind: ConfigMap
+  metadata:
+    annotations:
+      kubernetes.io/description: Contains a CA bundle that can be used to verify the
+        kube-apiserver when using internal endpoints such as the internal service
+        IP or kubernetes.default.svc. No other usage is guaranteed across distributions
+        of Kubernetes clusters.
+    creationTimestamp: "2022-10-23T18:13:52Z"
+    name: kube-root-ca.crt
+    namespace: default
+    resourceVersion: "304"
+    uid: a4675be9-9996-4bc4-96ea-cf9ecc8ec317
+- apiVersion: v1
+  data:
+    config.json: "{\r\n    \"opcConfig\": {\r\n        \"url\": \"opc.tcp://127.0.0.1:49320\",\r\n
+      \       \"securityPolicy\": \"None\",\r\n        \"securityMode\": \"None\",\r\n
+      \       \"autoGenCert\": false,\r\n        \"authType\": \"Anonymous\",\r\n
+      \       \"username\": null,\r\n        \"password\": null,\r\n        \"node\":
+      \"ns=2;s=Kanal1.Ger├ñt1\"\r\n    },\r\n    \"selectedTags\": [{\r\n            \"nodeId\":
+      \"ns=2;s=Kanal1.Ger├ñt1.Test Tag\",\r\n            \"name\": \"Test Tag\",\r\n
+      \           \"currentValue\": 1,\r\n            \"dataTypeId\": 11,\r\n            \"dataType\":
+      \"Double\",\r\n            \"exposeAsMetric\": true,\r\n            \"metricsType\":
+      \"Counter\"\r\n        },\r\n        {\r\n            \"nodeId\": \"ns=2;s=Kanal1.Ger├ñt1.Tag
+      2\",\r\n            \"name\": \"Tag 2\",\r\n            \"currentValue\": 0,\r\n
+      \           \"dataTypeId\": 5,\r\n            \"dataType\": \"UInt16\",\r\n
+      \           \"exposeAsMetric\": true,\r\n            \"metricsType\": \"Counter\"\r\n
+      \       },\r\n        {\r\n            \"nodeId\": \"ns=2;s=Kanal1.Ger├ñt1.Tag
+      1\",\r\n            \"name\": \"Tag 1\",\r\n            \"currentValue\": 7,\r\n
+      \           \"dataTypeId\": 5,\r\n            \"dataType\": \"UInt16\",\r\n
+      \           \"exposeAsMetric\": true,\r\n            \"metricsType\": \"Counter\"\r\n
+      \       },\r\n        {\r\n            \"nodeId\": \"ns=2;s=Kanal1.Ger├ñt1.String\",\r\n
+      \           \"name\": \"String\",\r\n            \"currentValue\": \"String
+      1\",\r\n            \"dataTypeId\": 12,\r\n            \"dataType\": \"String\",\r\n
+      \           \"exposeAsMetric\": false,\r\n            \"metricsType\": \"Counter\"\r\n
+      \       },\r\n        {\r\n            \"nodeId\": \"ns=2;s=Kanal1.Ger├ñt1.RAMPER\",\r\n
+      \           \"name\": \"RAMPER\",\r\n            \"currentValue\": 6.125,\r\n
+      \           \"dataTypeId\": 10,\r\n            \"dataType\": \"Float\",\r\n
+      \           \"exposeAsMetric\": true,\r\n            \"metricsType\": \"Gauge\"\r\n
+      \       }\r\n    ],\r\n    \"methodConfig\": {\r\n        \"subInterval\": 0.1,\r\n
+      \       \"name\": \"My TestLogger\",\r\n        \"targetURL\": \"http://localhost:3001/log\",\r\n
+      \       \"metricsEnabled\": true,\r\n        \"backup\": true,\r\n        \"description\":
+      null\r\n    }\r\n}"
+  kind: ConfigMap
+  metadata:
+    creationTimestamp: "2022-10-25T18:49:23Z"
+    name: log-config
+    namespace: default
+    resourceVersion: "7585"
+    uid: 97a130f3-d78a-48af-96ed-a675e3713a45
+- apiVersion: v1
+  data:
+    config.json: "{\\r\\n    \\\"opcConfig\\\": {\\r\\n        \\\"url\\\": \\\"opc.tcp://127.0.0.1:49320\\\",\\r\\n\n\t\t\\
+      \      \\\"securityPolicy\\\": \\\"None\\\",\\r\\n        \\\"securityMode\\\":
+      \\\"None\\\",\\r\\n\n\t\t\\       \\\"autoGenCert\\\": false,\\r\\n        \\\"authType\\\":
+      \\\"Anonymous\\\",\\r\\n\n\t\t\\       \\\"username\\\": null,\\r\\n        \\\"password\\\":
+      null,\\r\\n        \\\"node\\\":\n\t\t\\\"ns=2;s=Kanal1.GerÔö£├▒t1\\\"\\r\\n    },\\r\\n
+      \   \\\"selectedTags\\\": [{\\r\\n            \\\"nodeId\\\":\n\t\t\\\"ns=2;s=Kanal1.GerÔö£├▒t1.Test
+      Tag\\\",\\r\\n            \\\"name\\\": \\\"Test Tag\\\",\\r\\n\n\t\t\\           \\\"currentValue\\\":
+      1,\\r\\n            \\\"dataTypeId\\\": 11,\\r\\n            \\\"dataType\\\":\n\t\t\\\"Double\\\",\\r\\n
+      \           \\\"exposeAsMetric\\\": true,\\r\\n            \\\"metricsType\\\":\n\t\t\\\"Counter\\\"\\r\\n
+      \       },\\r\\n        {\\r\\n            \\\"nodeId\\\": \\\"ns=2;s=Kanal1.GerÔö£├▒t1.Tag\n\t\t2\\\",\\r\\n
+      \           \\\"name\\\": \\\"Tag 2\\\",\\r\\n            \\\"currentValue\\\":
+      0,\\r\\n\n\t\t\\           \\\"dataTypeId\\\": 5,\\r\\n            \\\"dataType\\\":
+      \\\"UInt16\\\",\\r\\n\n\t\t\\           \\\"exposeAsMetric\\\": true,\\r\\n
+      \           \\\"metricsType\\\": \\\"Counter\\\"\\r\\n\n\t\t\\       },\\r\\n
+      \       {\\r\\n            \\\"nodeId\\\": \\\"ns=2;s=Kanal1.GerÔö£├▒t1.Tag\n\t\t1\\\",\\r\\n
+      \           \\\"name\\\": \\\"Tag 1\\\",\\r\\n            \\\"currentValue\\\":
+      7,\\r\\n\n\t\t\\           \\\"dataTypeId\\\": 5,\\r\\n            \\\"dataType\\\":
+      \\\"UInt16\\\",\\r\\n\n\t\t\\           \\\"exposeAsMetric\\\": true,\\r\\n
+      \           \\\"metricsType\\\": \\\"Counter\\\"\\r\\n\n\t\t\\       },\\r\\n
+      \       {\\r\\n            \\\"nodeId\\\": \\\"ns=2;s=Kanal1.GerÔö£├▒t1.String\\\",\\r\\n\n\t\t\\
+      \          \\\"name\\\": \\\"String\\\",\\r\\n            \\\"currentValue\\\":
+      \\\"String\n\t\t1\\\",\\r\\n            \\\"dataTypeId\\\": 12,\\r\\n            \\\"dataType\\\":
+      \\\"String\\\",\\r\\n\n\t\t\\           \\\"exposeAsMetric\\\": false,\\r\\n
+      \           \\\"metricsType\\\": \\\"Counter\\\"\\r\\n\n\t\t\\       },\\r\\n
+      \       {\\r\\n            \\\"nodeId\\\": \\\"ns=2;s=Kanal1.GerÔö£├▒t1.RAMPER\\\",\\r\\n\n\t\t\\
+      \          \\\"name\\\": \\\"RAMPER\\\",\\r\\n            \\\"currentValue\\\":
+      6.125,\\r\\n\n\t\t\\           \\\"dataTypeId\\\": 10,\\r\\n            \\\"dataType\\\":
+      \\\"Float\\\",\\r\\n\n\t\t\\           \\\"exposeAsMetric\\\": true,\\r\\n            \\\"metricsType\\\":
+      \\\"Gauge\\\"\\r\\n\n\t\t\\       }\\r\\n    ],\\r\\n    \\\"methodConfig\\\":
+      {\\r\\n        \\\"subInterval\\\": 0.1,\\r\\n\n\t\t\\       \\\"name\\\": \\\"My
+      TestLogger\\\",\\r\\n        \\\"targetURL\\\": \\\"http://localhost:3001/log\\\",\\r\\n\n\t\t\\
+      \      \\\"metricsEnabled\\\": true,\\r\\n        \\\"backup\\\": true,\\r\\n
+      \       \\\"description\\\":\n\t\tnull\\r\\n    }\\r\\n}"
+  kind: ConfigMap
+  metadata:
+    annotations:
+      metacontroller.k8s.io/last-applied-configuration: '{"apiVersion":"v1","data":{"config.json":"{\\r\\n    \\\"opcConfig\\\":
+        {\\r\\n        \\\"url\\\": \\\"opc.tcp://127.0.0.1:49320\\\",\\r\\n\n\t\t\\       \\\"securityPolicy\\\":
+        \\\"None\\\",\\r\\n        \\\"securityMode\\\": \\\"None\\\",\\r\\n\n\t\t\\       \\\"autoGenCert\\\":
+        false,\\r\\n        \\\"authType\\\": \\\"Anonymous\\\",\\r\\n\n\t\t\\       \\\"username\\\":
+        null,\\r\\n        \\\"password\\\": null,\\r\\n        \\\"node\\\":\n\t\t\\\"ns=2;s=Kanal1.GerÔö£├▒t1\\\"\\r\\n    },\\r\\n    \\\"selectedTags\\\":
+        [{\\r\\n            \\\"nodeId\\\":\n\t\t\\\"ns=2;s=Kanal1.GerÔö£├▒t1.Test Tag\\\",\\r\\n            \\\"name\\\":
+        \\\"Test Tag\\\",\\r\\n\n\t\t\\           \\\"currentValue\\\": 1,\\r\\n            \\\"dataTypeId\\\":
+        11,\\r\\n            \\\"dataType\\\":\n\t\t\\\"Double\\\",\\r\\n            \\\"exposeAsMetric\\\":
+        true,\\r\\n            \\\"metricsType\\\":\n\t\t\\\"Counter\\\"\\r\\n        },\\r\\n        {\\r\\n            \\\"nodeId\\\":
+        \\\"ns=2;s=Kanal1.GerÔö£├▒t1.Tag\n\t\t2\\\",\\r\\n            \\\"name\\\": \\\"Tag
+        2\\\",\\r\\n            \\\"currentValue\\\": 0,\\r\\n\n\t\t\\           \\\"dataTypeId\\\":
+        5,\\r\\n            \\\"dataType\\\": \\\"UInt16\\\",\\r\\n\n\t\t\\           \\\"exposeAsMetric\\\":
+        true,\\r\\n            \\\"metricsType\\\": \\\"Counter\\\"\\r\\n\n\t\t\\       },\\r\\n        {\\r\\n            \\\"nodeId\\\":
+        \\\"ns=2;s=Kanal1.GerÔö£├▒t1.Tag\n\t\t1\\\",\\r\\n            \\\"name\\\": \\\"Tag
+        1\\\",\\r\\n            \\\"currentValue\\\": 7,\\r\\n\n\t\t\\           \\\"dataTypeId\\\":
+        5,\\r\\n            \\\"dataType\\\": \\\"UInt16\\\",\\r\\n\n\t\t\\           \\\"exposeAsMetric\\\":
+        true,\\r\\n            \\\"metricsType\\\": \\\"Counter\\\"\\r\\n\n\t\t\\       },\\r\\n        {\\r\\n            \\\"nodeId\\\":
+        \\\"ns=2;s=Kanal1.GerÔö£├▒t1.String\\\",\\r\\n\n\t\t\\           \\\"name\\\":
+        \\\"String\\\",\\r\\n            \\\"currentValue\\\": \\\"String\n\t\t1\\\",\\r\\n            \\\"dataTypeId\\\":
+        12,\\r\\n            \\\"dataType\\\": \\\"String\\\",\\r\\n\n\t\t\\           \\\"exposeAsMetric\\\":
+        false,\\r\\n            \\\"metricsType\\\": \\\"Counter\\\"\\r\\n\n\t\t\\       },\\r\\n        {\\r\\n            \\\"nodeId\\\":
+        \\\"ns=2;s=Kanal1.GerÔö£├▒t1.RAMPER\\\",\\r\\n\n\t\t\\           \\\"name\\\":
+        \\\"RAMPER\\\",\\r\\n            \\\"currentValue\\\": 6.125,\\r\\n\n\t\t\\           \\\"dataTypeId\\\":
+        10,\\r\\n            \\\"dataType\\\": \\\"Float\\\",\\r\\n\n\t\t\\           \\\"exposeAsMetric\\\":
+        true,\\r\\n            \\\"metricsType\\\": \\\"Gauge\\\"\\r\\n\n\t\t\\       }\\r\\n    ],\\r\\n    \\\"methodConfig\\\":
+        {\\r\\n        \\\"subInterval\\\": 0.1,\\r\\n\n\t\t\\       \\\"name\\\":
+        \\\"My TestLogger\\\",\\r\\n        \\\"targetURL\\\": \\\"http://localhost:3001/log\\\",\\r\\n\n\t\t\\       \\\"metricsEnabled\\\":
+        true,\\r\\n        \\\"backup\\\": true,\\r\\n        \\\"description\\\":\n\t\tnull\\r\\n    }\\r\\n}"},"kind":"ConfigMap","metadata":{"labels":{"controller-uid":"7b127ed5-fa41-41e1-8956-03991e04c3de"},"name":"opcua-datalogger-cm","namespace":"default"}}'
+    creationTimestamp: "2022-11-06T10:59:08Z"
+    labels:
+      controller-uid: 7b127ed5-fa41-41e1-8956-03991e04c3de
+    name: opcua-datalogger-cm
+    namespace: default
+    ownerReferences:
+    - apiVersion: doteich.com/v1alpha1
+      blockOwnerDeletion: true
+      controller: true
+      kind: LoggerConfig
+      name: test
+      uid: 7b127ed5-fa41-41e1-8956-03991e04c3de
+    resourceVersion: "64861"
+    uid: 3418701a-dd25-4298-8315-5f473cf00550
+kind: List
+metadata:
+  resourceVersion: ""
