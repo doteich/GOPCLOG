@@ -3,53 +3,12 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"gopc_operator/controller"
+	"math/rand"
 	"net/http"
+	"strconv"
+	"time"
 )
-
-type Pod struct {
-	ApiVersion string   `json:"apiVersion"`
-	Kind       string   `json:"kind"`
-	Metadata   Metadata `json:"metadata"`
-	Spec       Spec     `json:"spec"`
-}
-
-type Metadata struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-}
-
-type Spec struct {
-	RestartPolicy string      `json:"restartPolicy"`
-	Containers    []Container `json:"containers"`
-	Volumes       []Volumes   `json:"volumes"`
-}
-
-type Container struct {
-	Name         string         `json:"name"`
-	Image        string         `json:"image"`
-	VolumeMounts []VolumeMounts `json:"volumeMounts"`
-}
-
-type VolumeMounts struct {
-	Name      string `json:"name"`
-	Mountpath string `json:"mountPath"`
-}
-
-type Volumes struct {
-	Name      string       `json:"name"`
-	ConfigMap PodConfigMap `json:"configMap"`
-}
-
-type PodConfigMap struct {
-	Name string `json:"name"`
-}
-
-type ConfigMap struct {
-	ApiVersion string            `json:"apiVersion"`
-	Kind       string            `json:"kind"`
-	Metadata   Metadata          `json:"metadata"`
-	Data       map[string]string `json:"data"`
-}
 
 type ChildElements struct {
 	Status   DesiredResourceNumbers `json:"status"`
@@ -57,12 +16,19 @@ type ChildElements struct {
 }
 
 type DesiredResourceNumbers struct {
-	Pods       int8 `json:"pods"`
-	ConfigMaps int8 `json:"configmaps"`
+	Pods            int8 `json:"pods"`
+	ConfigMaps      int8 `json:"configmaps"`
+	Services        int8 `json:"services"`
+	ServiceMonitors int8 `json:"servicemonitors"`
 }
 
 type Request struct {
-	Parent Parent `json:"parent"`
+	Parent   Parent   `json:"parent"`
+	Children Children `json:"children"`
+}
+
+type Children struct {
+	Pods map[string]string `json:"Pod.v1"`
 }
 
 type Parent struct {
@@ -84,43 +50,54 @@ func main() {
 
 func sendPodData(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println("CONNECTION" + r.Method)
 	if r.Method == "POST" {
 
 		var body Request
 
 		json.NewDecoder(r.Body).Decode(&body)
+
 		fmt.Println(body)
 
-		metadata := Metadata{Name: "opcua-datalogger", Namespace: "default"}
-		container := Container{Name: "opcua-datalogger", Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}}
-		volumes := Volumes{Name: "config-volume", ConfigMap: PodConfigMap{Name: "opcua-datalogger-cm"}}
-		spec := Spec{RestartPolicy: "OnFailure", Containers: []Container{container}, Volumes: []Volumes{volumes}}
+		if len(body.Children.Pods) > 0 {
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+		} else {
+			podName := "opcua-datalogger" + setId()
 
-		newPod := Pod{ApiVersion: "v1", Kind: "Pod", Metadata: metadata, Spec: spec}
+			newPod := controller.SpawnPod(podName)
+			newConfigmap := controller.SpawnCM(body.Parent.Spec.Data, podName)
 
-		data := make(map[string]string)
-		data["config.json"] = body.Parent.Spec.Data
+			var childs ChildElements
+			childs.Children = append(childs.Children, newPod)
+			childs.Children = append(childs.Children, newConfigmap)
 
-		newConfigmap := ConfigMap{ApiVersion: "v1", Kind: "ConfigMap", Metadata: Metadata{Name: "opcua-datalogger-cm", Namespace: "default"}, Data: data}
+			childs.Status.Pods = 1
+			childs.Status.ConfigMaps = 1
+			childs.Status.Pods = 1
+			childs.Status.ServiceMonitors = 1
 
-		var childs ChildElements
-		childs.Children = append(childs.Children, newPod)
-		childs.Children = append(childs.Children, newConfigmap)
-		childs.Status.Pods = 1
-		childs.Status.ConfigMaps = 1
+			json, err := json.Marshal(childs)
 
-		json, err := json.Marshal(childs)
-
-		if err != nil {
-			fmt.Println(err)
+			if err != nil {
+				fmt.Println(err)
+			}
+			w.Header().Add("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write(json)
 		}
-		w.Header().Add("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write(json)
+
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
 
 	}
 
+}
+
+func setId() string {
+	randNum := strconv.Itoa(rand.Intn(1000))
+	day := strconv.Itoa(time.Now().Day())
+	year := strconv.Itoa(time.Now().Year())
+
+	id := day + year + randNum
+	return id
 }

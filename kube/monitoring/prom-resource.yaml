@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: Prometheus
+metadata:
+  name: prometheus-opcua-resource
+  namespace: observability
+spec:
+  serviceAccountName: kube-prom-stack-kube-prome-prometheus
+  podMonitorSelector:
+    matchLabels:
+      resource: opcua-datalogger-monitoring-pm
+  serviceMonitorSelector:
+    matchLabels:
+      resource: opcua-datalogger-monitoring
+  resources:
+    requests:
+      memory: 200Mi
+  enableAdminAPI: true

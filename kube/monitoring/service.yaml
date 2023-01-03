@@ -1,0 +1,14 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: opcua-datalogger-service
+  namespace: default
+  labels:
+    app: opcua-datalogger
+spec:
+  selector:
+    app: opcua-datalogger
+  ports:
+  - port: 80
+    targetPort: 4444
+    name: web

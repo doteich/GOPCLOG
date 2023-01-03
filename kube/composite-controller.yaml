@@ -20,4 +20,4 @@ spec:
     sync:
       webhook:
         url: http://gopclogs-operator.metacontroller/sync
-        timeout: 10s
+        timeout: 60s

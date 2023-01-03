@@ -1,0 +1,17 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: opcua-datalogger-servicemonitor
+  namespace: observability
+  labels:
+    resource: opcua-datalogger-monitoring
+    release: kube-prom-stack
+spec:
+  selector:
+    matchLabels:
+      app: opcua-datalogger
+  endpoints:
+  - port: web
+    path: metrics
+    interval: 30s
+
