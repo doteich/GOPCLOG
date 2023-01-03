@@ -1,0 +1,14 @@
+apiVersion: doteich.com/v1alpha1
+kind: LoggerConfig
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"doteich.com/v1alpha1","kind":"LoggerConfig","metadata":{"annotations":{},"name":"test","namespace":"default"},"spec":{"data":"{\"opcConfig\": {\"url\": \"opc.tcp://IPorURL\",\"securityPolicy\": \"None\",\"securityMode\": \"None\",\"authType\": \"User \u0026 Password\",\"username\": \"*\",\"password\": \"*\",\"node\": \"ns=3;s=NODE\"},\"selectedTags\": [{\"nodeId\": \"ns=3;s=XYZ\",\"name\": \"TESTTAG1\"}],\"methodConfig\": {\"subInterval\": 10,\"name\": \"TestLogger\",\"description\": null}}\""}}
+  creationTimestamp: "2022-10-31T10:17:39Z"
+  generation: 1
+  name: test
+  namespace: default
+  resourceVersion: "36718"
+  uid: 7b127ed5-fa41-41e1-8956-03991e04c3de
+spec:
+  data: '{"opcConfig":{"url":"opc.tcp://192.168.xxxx:49320","securityPolicy":"None","securityMode":"None","autoGenCert":false,"authType":"Anonymous","username":null,"password":null,"node":"ns=2;s=Kanal1.Gerät1","nodes":[{"nodeId":"ns=2;s=Kanal1.Gerät1.Tag 1","name":"Tag 1","currentValue":2,"dataTypeId":5,"dataType":"UInt16","exposeAsMetric":false,"metricsType":"Counter"},{"nodeId":"ns=2;s=Kanal1.Gerät1.String","name":"String","currentValue":"String 1","dataTypeId":12,"dataType":"String","exposeAsMetric":false,"metricsType":"Counter"},{"nodeId":"ns=2;s=Kanal1.Gerät1.RAMPER","name":"RAMPER","currentValue":31.200000762939453,"dataTypeId":10,"dataType":"Float","exposeAsMetric":false,"metricsType":"Counter"}]},"selectedTags":[{"nodeId":"ns=2;s=Kanal1.Gerät1.Tag 1","name":"Tag 1","currentValue":3,"dataTypeId":5,"dataType":"UInt16","exposeAsMetric":true,"metricsType":"Counter"},{"nodeId":"ns=2;s=Kanal1.Gerät1.String","name":"String","currentValue":"String 1","dataTypeId":12,"dataType":"String","exposeAsMetric":false,"metricsType":"Counter"},{"nodeId":"ns=2;s=Kanal1.Gerät1.RAMPER","name":"RAMPER","currentValue":1,"dataTypeId":10,"dataType":"Float","exposeAsMetric":true,"metricsType":"Gauge"}],"methodConfig":{"subInterval":10,"name":"MyLogger","targetURL":"https://...","metricsEnabled":true,"backup":true,"description":"A Test Logger"}}'
