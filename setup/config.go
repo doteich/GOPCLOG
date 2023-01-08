@@ -35,7 +35,7 @@ type LoggerConfig struct {
 }
 
 func SetConfig() Config {
-	viper.AddConfigPath("./config")
+	viper.AddConfigPath("/etc/config")
 	viper.SetConfigName("config")
 	viper.SetConfigType("json")
 	err := viper.ReadInConfig()

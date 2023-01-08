@@ -2,10 +2,11 @@ apiVersion: monitoring.coreos.com/v1
 kind: PodMonitor
 metadata:
   name: opcua-datalogger-pod-monitor
-  namespace: default
+  namespace: observability
   labels:
     app: opcua-datalogger
     resource: opcua-datalogger-monitoring-pm
+    release: kube-prom-stack
 spec:
   selector:
     matchLabels:
