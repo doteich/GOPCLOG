@@ -1,4 +1,4 @@
-package setup
+package opcua_monitor
 
 import (
 	"context"
@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	exporter "github.com/doteich/OPC-UA-Logger/exporters"
+	"github.com/doteich/OPC-UA-Logger/setup"
 	"github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/monitor"
 	"github.com/gopcua/opcua/ua"
@@ -34,7 +36,7 @@ func ValidateEndpoint(ctx context.Context, endpoint string, policy string, mode 
 
 }
 
-func SetClientOptions(config *Config, ep *ua.EndpointDescription) []opcua.Option {
+func SetClientOptions(config *setup.Config, ep *ua.EndpointDescription) []opcua.Option {
 
 	// basic params
 	connectionParams := []opcua.Option{
@@ -68,7 +70,7 @@ func CreateClientConnection(ep string, options []opcua.Option) *opcua.Client {
 
 }
 
-func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interval time.Duration, lag time.Duration, wg *sync.WaitGroup, nodes []NodeObject) {
+func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interval time.Duration, lag time.Duration, wg *sync.WaitGroup, nodes []setup.NodeObject) {
 	ch := make(chan *monitor.DataChangeMessage, 16)
 	fmt.Println(nodes)
 	nodeArr := make([]string, 0)
@@ -97,7 +99,7 @@ func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interva
 				id := msg.NodeID.String()
 				fmt.Println(id)
 
-				go PublishData(id, msg.Value.Value(), msg.SourceTimestamp)
+				go exporter.PublishData(id, msg.Value.Value(), msg.SourceTimestamp)
 			}
 			time.Sleep(lag)
 		}

@@ -36,7 +36,8 @@ type Parent struct {
 }
 
 type RequestSpec struct {
-	Data string `json:"data"`
+	Data      string `json:"data"`
+	SecretRef string `json:"secretRef"`
 }
 
 func main() {
@@ -64,7 +65,9 @@ func sendPodData(w http.ResponseWriter, r *http.Request) {
 		} else {
 			podName := "opcua-datalogger" + setId()
 
-			newPod := controller.SpawnPod(podName)
+			secret := body.Parent.Spec.SecretRef
+
+			newPod := controller.SpawnPod(podName, secret)
 			newConfigmap := controller.SpawnCM(body.Parent.Spec.Data, podName)
 
 			var childs ChildElements

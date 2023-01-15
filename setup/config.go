@@ -1,6 +1,11 @@
 package setup
 
-import "github.com/spf13/viper"
+import (
+	"fmt"
+	"os"
+
+	"github.com/spf13/viper"
+)
 
 type Config struct {
 	ClientConfig ClientConfig `mapstructure:"opcConfig"`
@@ -44,8 +49,21 @@ func SetConfig() Config {
 		panic(err)
 	}
 
+	// Mount Secret to the application from env
+
 	var c Config
 
 	viper.Unmarshal(&c)
+
+	if c.ClientConfig.AuthType != "Anonymous" {
+		user := os.Getenv("OPCUA_USERNAME")
+		pw := os.Getenv("OPCUA_PASSWORD")
+
+		c.ClientConfig.Username = user
+		c.ClientConfig.Password = pw
+	}
+
+	fmt.Printf("User:%s; PW: %s", c.ClientConfig.Username, c.ClientConfig.Password)
+
 	return c
 }

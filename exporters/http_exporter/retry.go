@@ -1,9 +1,12 @@
-package exporter
+package http_exporter
 
 import (
 	"encoding/json"
 	"fmt"
 	"os"
+
+	"github.com/doteich/OPC-UA-Logger/exporters/logging"
+	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
 )
 
 type BufferEntry struct {
@@ -19,7 +22,7 @@ func Resend() {
 	for _, obj := range messages {
 		payload := obj.Payload
 		PostLoggedData(payload.NodeId, payload.NodeName, payload.Value, payload.Timestamp, payload.LogName, payload.Server)
-		failed_requests.WithLabelValues(path).Add(-1)
+		metrics_exporter.Failed_requests.WithLabelValues(path).Add(-1)
 	}
 	bufferSize = 0
 
@@ -32,7 +35,7 @@ func ReadLogFile() []BufferEntry {
 	dat, err := os.ReadFile("tmp/logs/buffer.json")
 
 	if err != nil {
-		Logs.Error(fmt.Sprint(err))
+		logging.Logs.Error(fmt.Sprint(err))
 	}
 
 	jsonString := string(dat)
@@ -43,7 +46,7 @@ func ReadLogFile() []BufferEntry {
 	var jsonArr []BufferEntry
 
 	if err := json.Unmarshal([]byte(jsonString), &jsonArr); err != nil {
-		Logs.Error(fmt.Sprint(err))
+		logging.Logs.Error(fmt.Sprint(err))
 	}
 
 	os.Truncate("tmp/logs/buffer.json", 0)

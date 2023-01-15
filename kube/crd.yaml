@@ -33,6 +33,8 @@ spec:
              properties:
                data:
                  type: string
+               secretRef:
+                 type: string
              required: ["data"]
          required: ["spec"]
      subresources:
