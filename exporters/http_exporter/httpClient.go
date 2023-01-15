@@ -1,4 +1,4 @@
-package exporter
+package http_exporter
 
 import (
 	"bytes"
@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/doteich/OPC-UA-Logger/exporters/logging"
+	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
 	"go.uber.org/zap"
 )
 
@@ -57,20 +59,20 @@ func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp
 
 	if err != nil {
 
-		Buffer.Error("Failed to reach "+path, zap.Any("payload", &newPayload))
+		logging.Buffer.Error("Failed to reach "+path, zap.Any("payload", &newPayload))
 		bufferSize += 1
 		numberSuccessfulMessages = 0
-		failed_requests.WithLabelValues(path).Inc()
-		Logs.Error("Connection refused for " + path)
+		metrics_exporter.Failed_requests.WithLabelValues(path).Inc()
+		logging.Logs.Error("Connection refused for " + path)
 
 	} else {
 		statusCode := resp.StatusCode
 		if statusCode > 399 {
-			Buffer.Error("Target returned a bad response: "+fmt.Sprint(statusCode), zap.Any("payload", &newPayload))
+			logging.Buffer.Error("Target returned a bad response: "+fmt.Sprint(statusCode), zap.Any("payload", &newPayload))
 			bufferSize += 1
 			numberSuccessfulMessages = 0
-			failed_requests.WithLabelValues(path).Inc()
-			Logs.Error("Target returned a bad response: " + fmt.Sprint(statusCode))
+			metrics_exporter.Failed_requests.WithLabelValues(path).Inc()
+			logging.Logs.Error("Target returned a bad response: " + fmt.Sprint(statusCode))
 
 		}
 

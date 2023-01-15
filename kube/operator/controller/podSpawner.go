@@ -28,6 +28,7 @@ type Container struct {
 	Image        string           `json:"image"`
 	VolumeMounts []VolumeMounts   `json:"volumeMounts"`
 	Ports        []ContainerPorts `json:"ports"`
+	EnvVars      []EnvVar         `json:"env"`
 }
 
 type VolumeMounts struct {
@@ -55,9 +56,41 @@ type ConfigMap struct {
 	Data       map[string]string `json:"data"`
 }
 
-func SpawnPod(podId string) Pod {
+type EnvVar struct {
+	Name      string `json:"name"`
+	ValueFrom struct {
+		SecretKeyRef struct {
+			Name     string `json:"name"`
+			Key      string `json:"key"`
+			Optional bool   `json:"optional"`
+		} `json:"secretKeyRef"`
+	} `json:"valueFrom"`
+}
+
+func SpawnPod(podId string, secret string) Pod {
+
+	var container Container
+
+	if len(secret) > 0 {
+		var userEnv EnvVar
+		userEnv.Name = "OPCUA_USERNAME"
+		userEnv.ValueFrom.SecretKeyRef.Name = secret
+		userEnv.ValueFrom.SecretKeyRef.Key = "username"
+		userEnv.ValueFrom.SecretKeyRef.Optional = false
+
+		var pwEnv EnvVar
+		pwEnv.Name = "OPCUA_PASSWORD"
+		pwEnv.ValueFrom.SecretKeyRef.Name = secret
+		pwEnv.ValueFrom.SecretKeyRef.Key = "password"
+		pwEnv.ValueFrom.SecretKeyRef.Optional = false
+
+		container = Container{Name: podId, Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}, Ports: []ContainerPorts{{ContainerPort: 4444}}, EnvVars: []EnvVar{userEnv, pwEnv}}
+	} else {
+
+		container = Container{Name: podId, Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}, Ports: []ContainerPorts{{ContainerPort: 4444}}}
+	}
+
 	metadata := Metadata{Name: podId, Namespace: "default", Labels: Labels{App: "opcua-datalogger"}}
-	container := Container{Name: podId, Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}, Ports: []ContainerPorts{{ContainerPort: 4444}}}
 	volumes := Volumes{Name: "config-volume", ConfigMap: PodConfigMap{Name: podId + "-cm"}}
 	spec := Spec{RestartPolicy: "OnFailure", Containers: []Container{container}, Volumes: []Volumes{volumes}}
 
