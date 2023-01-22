@@ -1,9 +1,10 @@
 package exporter
 
 import (
+	"strings"
 	"time"
 
-	"github.com/doteich/OPC-UA-Logger/exporters/http_exporter"
+	"github.com/doteich/OPC-UA-Logger/exporters/db_exporter"
 	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
 	"github.com/doteich/OPC-UA-Logger/setup"
 )
@@ -15,7 +16,9 @@ func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 	for _, node := range config.Nodes {
 		if node.NodeId == nodeId {
 
-			http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, config.LoggerConfig.Name, config.ClientConfig.Url)
+			//http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, config.LoggerConfig.Name, config.ClientConfig.Url)
+			namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
+			db_exporter.InsertValues(namespace, node.NodeId, node.NodeName, iface, timestamp, config.LoggerConfig.Name, config.ClientConfig.Url)
 
 			if config.LoggerConfig.MetricsEnabled {
 				ExportMetric(node.MetricsType, node.NodeId, node.NodeName, iface)
