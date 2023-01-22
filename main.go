@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/doteich/OPC-UA-Logger/exporters/db_exporter"
 	"github.com/doteich/OPC-UA-Logger/exporters/http_exporter"
 	"github.com/doteich/OPC-UA-Logger/exporters/logging"
 	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
@@ -25,12 +26,13 @@ func main() {
 		setup.GeneratePEMFiles()
 	}
 
+	namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
+	db_exporter.SetupDBConnection(namespace)
+
 	http_exporter.InitRoutes(config.LoggerConfig.TargetURL)
 	logging.InitLogs()
 
 	if config.LoggerConfig.MetricsEnabled {
-
-		namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
 
 		go metrics_exporter.ExposeMetrics(namespace)
 	}

@@ -1,7 +1,6 @@
 package setup
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/spf13/viper"
@@ -62,8 +61,6 @@ func SetConfig() Config {
 		c.ClientConfig.Username = user
 		c.ClientConfig.Password = pw
 	}
-
-	fmt.Printf("User:%s; PW: %s", c.ClientConfig.Username, c.ClientConfig.Password)
 
 	return c
 }
