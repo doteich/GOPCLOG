@@ -21,7 +21,7 @@ func Resend() {
 
 	for _, obj := range messages {
 		payload := obj.Payload
-		PostLoggedData(payload.NodeId, payload.NodeName, payload.Value, payload.Timestamp, payload.LogName, payload.Server)
+		PostLoggedData(payload.NodeId, payload.NodeName, payload.Value, payload.Timestamp, payload.LogName, payload.Server, payload.DataType)
 		metrics_exporter.Failed_requests.WithLabelValues(path).Add(-1)
 	}
 	bufferSize = 0
