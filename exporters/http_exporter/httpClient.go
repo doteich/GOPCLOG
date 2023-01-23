@@ -29,17 +29,18 @@ type Payload struct {
 	Timestamp time.Time   `json:"timestamp"`
 	LogName   string      `json:"logName"`
 	Server    string      `json:"server"`
+	DataType  string      `json:"dataType"`
 }
 
 func InitRoutes(p string) {
 	path = p
 }
 
-func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp time.Time, logName string, server string) {
+func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp time.Time, logName string, server string, datatype string) {
 
 	client := http.Client{}
 
-	newPayload := Payload{NodeId: nodeId, NodeName: nodeName, Value: value, Timestamp: timestamp, LogName: logName, Server: server}
+	newPayload := Payload{NodeId: nodeId, NodeName: nodeName, Value: value, Timestamp: timestamp, LogName: logName, Server: server, DataType: datatype}
 
 	jsonPayload, err := json.Marshal(newPayload)
 
