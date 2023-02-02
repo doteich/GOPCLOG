@@ -11,63 +11,10 @@ import (
 	"github.com/doteich/OPC-UA-Logger/setup"
 	"github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/monitor"
-	"github.com/gopcua/opcua/ua"
 )
 
 func errorHandler(err error) {
 	panic(err)
-}
-
-func ValidateEndpoint(ctx context.Context, endpoint string, policy string, mode string) *ua.EndpointDescription {
-	endpoints, err := opcua.GetEndpoints(ctx, endpoint)
-
-	if err != nil {
-		fmt.Println(endpoint + policy + mode)
-		errorHandler(err)
-	}
-
-	ep := opcua.SelectEndpoint(endpoints, policy, ua.MessageSecurityModeFromString(mode))
-
-	if ep == nil {
-		panic("No Matching Endpoint Found - Check Configuration")
-	}
-
-	return ep
-
-}
-
-func SetClientOptions(config *setup.Config, ep *ua.EndpointDescription) []opcua.Option {
-
-	// basic params
-	connectionParams := []opcua.Option{
-		opcua.SecurityPolicy(config.ClientConfig.SecurityPolicy),
-		opcua.SecurityModeString(config.ClientConfig.SecurityMode),
-	}
-
-	if config.ClientConfig.SecurityMode != "None" || config.ClientConfig.SecurityPolicy != "None" {
-		connectionParams = append(connectionParams, opcua.CertificateFile("./certs/cert.pem"))
-		connectionParams = append(connectionParams, opcua.PrivateKeyFile("./certs/private_key.pem"))
-	}
-
-	switch config.ClientConfig.AuthType {
-	case "User & Password":
-		connectionParams = append(connectionParams, opcua.AuthUsername(config.ClientConfig.Username, config.ClientConfig.Password))
-		connectionParams = append(connectionParams, opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeUserName))
-	case "Certificate":
-		//connectionParams = append(connectionParams, opcua.AuthCertificate())
-		connectionParams = append(connectionParams, opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeCertificate))
-	default:
-		connectionParams = append(connectionParams, opcua.AuthAnonymous())
-		connectionParams = append(connectionParams, opcua.SecurityFromEndpoint(ep, ua.UserTokenTypeAnonymous))
-	}
-
-	return connectionParams
-}
-
-func CreateClientConnection(ep string, options []opcua.Option) *opcua.Client {
-
-	return opcua.NewClient(ep, options...)
-
 }
 
 func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interval time.Duration, lag time.Duration, wg *sync.WaitGroup, nodes []setup.NodeObject) {

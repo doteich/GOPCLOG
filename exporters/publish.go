@@ -11,7 +11,7 @@ import (
 
 var SelectedExportes []string
 
-func setExporters() {
+func SetExporters(config *setup.Config) {
 
 }
 
