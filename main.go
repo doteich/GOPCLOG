@@ -1,12 +1,10 @@
 package main
 
 import (
-	"strings"
+	"fmt"
 
-	"github.com/doteich/OPC-UA-Logger/exporters/db_exporter"
-	"github.com/doteich/OPC-UA-Logger/exporters/http_exporter"
+	exporter "github.com/doteich/OPC-UA-Logger/exporters"
 	"github.com/doteich/OPC-UA-Logger/exporters/logging"
-	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
 	"github.com/doteich/OPC-UA-Logger/machine/opcua_monitor"
 	"github.com/doteich/OPC-UA-Logger/setup"
 )
@@ -19,20 +17,11 @@ func main() {
 		setup.GeneratePEMFiles()
 	}
 
-	namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
-
-	db_exporter.SetupDBConnection(namespace)
-
-	http_exporter.InitRoutes(config.LoggerConfig.TargetURL)
+	exporter.InitExporters(&config)
+	fmt.Println("INIT01")
 	logging.InitLogs()
 
-	if config.LoggerConfig.MetricsEnabled {
-
-		go metrics_exporter.ExposeMetrics(namespace)
-	}
-
+	fmt.Println("INIT")
 	opcua_monitor.CreateOPCUAMonitor(config)
-
-	//exporter.ReadLogFile()
 
 }

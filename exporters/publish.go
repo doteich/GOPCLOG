@@ -1,71 +1,105 @@
 package exporter
 
 import (
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 
-	"github.com/doteich/OPC-UA-Logger/exporters/db_exporter"
+	"github.com/doteich/OPC-UA-Logger/exporters/http_exporter"
 	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
 	"github.com/doteich/OPC-UA-Logger/setup"
 )
 
-var SelectedExportes []string
+type Exporters struct {
+	Rest       bool
+	Prometheus bool
+}
 
-func SetExporters(config *setup.Config) {
+var EnabledExporters Exporters
+var PubConfig setup.Config
+
+func InitExporters(config *setup.Config) {
+
+	PubConfig = *config
+
+	namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
+	go metrics_exporter.ExposeMetrics(namespace)
+
+	if config.ExporterConfig.Rest.Enabled {
+		EnabledExporters.Rest = true
+		http_exporter.InitRoutes(config.ExporterConfig.Rest.URL)
+	}
+
+	if config.ExporterConfig.Prometheus.Enabled {
+		EnabledExporters.Prometheus = true
+
+	}
 
 }
 
 func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 
-	config := setup.SetConfig()
+	var dataType string
+	var metricsValue float64
 
-	for _, node := range config.Nodes {
-		if node.NodeId == nodeId {
+	switch v := iface.(type) {
+	case int:
+		dataType = "int"
+		metricsValue = float64(v)
+	case int8:
+		dataType = "int8"
+		metricsValue = float64(v)
+	case int16:
+		dataType = "int16"
+		metricsValue = float64(v)
+	case int32:
+		dataType = "int32"
+		metricsValue = float64(v)
+	case uint8:
+		dataType = "uint8"
+		metricsValue = float64(v)
+	case uint16:
+		dataType = "uint16"
+		metricsValue = float64(v)
+	case uint32:
+		dataType = "uint32"
+		metricsValue = float64(v)
+	case float32:
+		dataType = "float32"
+		metricsValue = float64(v)
+	case float64:
+		dataType = "float64"
+		metricsValue = v
+	case string:
+		dataType = "string"
+	case bool:
+		dataType = "bool"
+	}
 
-			//http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, config.LoggerConfig.Name, config.ClientConfig.Url)
-			namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
-			db_exporter.InsertValues(namespace, node.NodeId, node.NodeName, iface, timestamp, config.LoggerConfig.Name, config.ClientConfig.Url)
+	node, err := findNodeDetails(nodeId)
 
-			if config.LoggerConfig.MetricsEnabled {
-				ExportMetric(node.MetricsType, node.NodeId, node.NodeName, iface)
-			}
-		}
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	if EnabledExporters.Rest {
+		http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, PubConfig.LoggerConfig.Name, PubConfig.ClientConfig.Url, dataType)
+	}
+
+	if EnabledExporters.Prometheus && (dataType != "bool" && dataType != "string") {
+
+		metrics_exporter.SetMetricsValue(node.MetricsType, nodeId, node.NodeName, metricsValue)
 	}
 
 }
 
-func ExportMetric(metricsType string, nodeId string, name string, iface interface{}) {
-
-	switch v := iface.(type) {
-	case int:
-		value := float64(v)
-		metrics_exporter.SetMetricsValue(metricsType, nodeId, name, value)
-	case int8:
-		value := float64(v)
-		metrics_exporter.SetMetricsValue(metricsType, nodeId, name, value)
-	case int16:
-		value := float64(v)
-		metrics_exporter.SetMetricsValue(metricsType, nodeId, name, value)
-	case int32:
-		value := float64(v)
-		metrics_exporter.SetMetricsValue(metricsType, nodeId, name, value)
-	case uint:
-		value := float64(v)
-		metrics_exporter.SetMetricsValue(metricsType, nodeId, name, value)
-	case uint8:
-		value := float64(v)
-		metrics_exporter.SetMetricsValue(metricsType, nodeId, name, value)
-	case uint16:
-		value := float64(v)
-		metrics_exporter.SetMetricsValue(metricsType, nodeId, name, value)
-	case uint32:
-		value := float64(v)
-		metrics_exporter.SetMetricsValue(metricsType, nodeId, name, value)
-	case float32:
-		value := float64(v)
-		metrics_exporter.SetMetricsValue(metricsType, nodeId, name, value)
-	case float64:
-		metrics_exporter.SetMetricsValue(metricsType, nodeId, name, v)
+func findNodeDetails(nodeId string) (setup.NodeObject, error) {
+	for _, node := range PubConfig.Nodes {
+		if nodeId == node.NodeId {
+			return node, nil
+		}
 	}
-
+	return setup.NodeObject{}, errors.New("node not found")
 }
