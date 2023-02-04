@@ -1,6 +1,9 @@
 package exporter
 
 import (
+	"errors"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/doteich/OPC-UA-Logger/exporters/http_exporter"
@@ -8,62 +11,95 @@ import (
 	"github.com/doteich/OPC-UA-Logger/setup"
 )
 
-func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
+type Exporters struct {
+	Rest       bool
+	Prometheus bool
+}
 
-	config := setup.SetConfig()
+var EnabledExporters Exporters
+var PubConfig setup.Config
 
-	for _, node := range config.Nodes {
-		if node.NodeId == nodeId {
+func InitExporters(config *setup.Config) {
 
-			var dataType string
-			var metricsValue float64
+	PubConfig = *config
 
-			switch v := iface.(type) {
-			case int:
-				dataType = "int"
-				metricsValue = float64(v)
-			case int8:
-				dataType = "int8"
-				metricsValue = float64(v)
-			case int16:
-				dataType = "int16"
-				metricsValue = float64(v)
-			case int32:
-				dataType = "int32"
-				metricsValue = float64(v)
-			case uint8:
-				dataType = "uint8"
-				metricsValue = float64(v)
-			case uint16:
-				dataType = "uint16"
-				metricsValue = float64(v)
-			case uint32:
-				dataType = "uint32"
-				metricsValue = float64(v)
-			case float32:
-				dataType = "float32"
-				metricsValue = float64(v)
-			case float64:
-				dataType = "float64"
-				metricsValue = v
-			case string:
-				dataType = "string"
-			case bool:
-				dataType = "bool"
-			}
+	namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
+	go metrics_exporter.ExposeMetrics(namespace)
 
-			http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, config.LoggerConfig.Name, config.ClientConfig.Url, dataType)
+	if config.ExporterConfig.Rest.Enabled {
+		EnabledExporters.Rest = true
+		http_exporter.InitRoutes(config.ExporterConfig.Rest.URL)
+	}
 
-			if config.LoggerConfig.MetricsEnabled && (dataType != "bool" || dataType != "string") {
-				ExportMetric(node.MetricsType, node.NodeId, node.NodeName, metricsValue)
-			}
-		}
+	if config.ExporterConfig.Prometheus.Enabled {
+		EnabledExporters.Prometheus = true
+
 	}
 
 }
 
-func ExportMetric(metricsType string, nodeId string, name string, metricsValue float64) {
+func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 
-	metrics_exporter.SetMetricsValue(metricsType, nodeId, name, metricsValue)
+	var dataType string
+	var metricsValue float64
 
+	switch v := iface.(type) {
+	case int:
+		dataType = "int"
+		metricsValue = float64(v)
+	case int8:
+		dataType = "int8"
+		metricsValue = float64(v)
+	case int16:
+		dataType = "int16"
+		metricsValue = float64(v)
+	case int32:
+		dataType = "int32"
+		metricsValue = float64(v)
+	case uint8:
+		dataType = "uint8"
+		metricsValue = float64(v)
+	case uint16:
+		dataType = "uint16"
+		metricsValue = float64(v)
+	case uint32:
+		dataType = "uint32"
+		metricsValue = float64(v)
+	case float32:
+		dataType = "float32"
+		metricsValue = float64(v)
+	case float64:
+		dataType = "float64"
+		metricsValue = v
+	case string:
+		dataType = "string"
+	case bool:
+		dataType = "bool"
+	}
+
+	node, err := findNodeDetails(nodeId)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	if EnabledExporters.Rest {
+		http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, PubConfig.LoggerConfig.Name, PubConfig.ClientConfig.Url, dataType)
+	}
+
+	if EnabledExporters.Prometheus && (dataType != "bool" && dataType != "string") {
+
+		metrics_exporter.SetMetricsValue(node.MetricsType, nodeId, node.NodeName, metricsValue)
+	}
+
+}
+
+func findNodeDetails(nodeId string) (setup.NodeObject, error) {
+	for _, node := range PubConfig.Nodes {
+		if nodeId == node.NodeId {
+			return node, nil
+		}
+	}
+	return setup.NodeObject{}, errors.New("node not found")
 }

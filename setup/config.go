@@ -7,9 +7,10 @@ import (
 )
 
 type Config struct {
-	ClientConfig ClientConfig `mapstructure:"opcConfig"`
-	Nodes        []NodeObject `mapstructure:"selectedTags"`
-	LoggerConfig LoggerConfig `mapstructure:"methodConfig"`
+	ClientConfig   ClientConfig `mapstructure:"opcConfig"`
+	Nodes          []NodeObject `mapstructure:"selectedTags"`
+	LoggerConfig   LoggerConfig `mapstructure:"methodConfig"`
+	ExporterConfig Exporters    `mapstructure:"exporters"`
 }
 
 type ClientConfig struct {
@@ -31,11 +32,21 @@ type NodeObject struct {
 	MetricsType     string `mapstructure:"metricsType"`
 }
 type LoggerConfig struct {
-	Interval       int    `mapstructure:"subInterval"`
-	Name           string `mapstructure:"name"`
-	TargetURL      string `mapstructure:"targetURL"`
-	MetricsEnabled bool   `mapstructure:"metricsEnabled"`
-	BackupEnabled  bool   `mapstructure:"backup"`
+	Interval int    `mapstructure:"subInterval"`
+	Name     string `mapstructure:"name"`
+}
+type Exporters struct {
+	Prometheus PrometheusConfig `mapstructure:"prometheus"`
+	Rest       RestConfig       `mapstructure:"rest"`
+}
+
+type PrometheusConfig struct {
+	Enabled bool `mapstructure:"enabled"`
+}
+
+type RestConfig struct {
+	Enabled bool   `mapstructure:"enabled"`
+	URL     string `mapstructure:"targetURL"`
 }
 
 func SetConfig() Config {
