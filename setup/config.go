@@ -38,6 +38,7 @@ type LoggerConfig struct {
 type Exporters struct {
 	Prometheus PrometheusConfig `mapstructure:"prometheus"`
 	Rest       RestConfig       `mapstructure:"rest"`
+	Websockets WebsocketConfig  `mapstructure:"websockets"`
 }
 
 type PrometheusConfig struct {
@@ -47,6 +48,10 @@ type PrometheusConfig struct {
 type RestConfig struct {
 	Enabled bool   `mapstructure:"enabled"`
 	URL     string `mapstructure:"targetURL"`
+}
+
+type WebsocketConfig struct {
+	Enabled bool `mapstructure:"enabled"`
 }
 
 func SetConfig() Config {
