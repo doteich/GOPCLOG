@@ -8,12 +8,14 @@ import (
 
 	"github.com/doteich/OPC-UA-Logger/exporters/http_exporter"
 	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
+	"github.com/doteich/OPC-UA-Logger/exporters/websockets"
 	"github.com/doteich/OPC-UA-Logger/setup"
 )
 
 type Exporters struct {
 	Rest       bool
 	Prometheus bool
+	Websockets bool
 }
 
 var EnabledExporters Exporters
@@ -34,6 +36,11 @@ func InitExporters(config *setup.Config) {
 	if config.ExporterConfig.Prometheus.Enabled {
 		EnabledExporters.Prometheus = true
 
+	}
+
+	if config.ExporterConfig.Websockets.Enabled {
+		EnabledExporters.Websockets = true
+		go websockets.InitWebsockets()
 	}
 
 }
@@ -91,6 +98,11 @@ func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 	if EnabledExporters.Prometheus && (dataType != "bool" && dataType != "string") {
 
 		metrics_exporter.SetMetricsValue(node.MetricsType, nodeId, node.NodeName, metricsValue)
+	}
+
+	if EnabledExporters.Websockets {
+
+		websockets.BroadcastToWebsocket(node.NodeId, node.NodeName, iface, timestamp, PubConfig.LoggerConfig.Name, PubConfig.ClientConfig.Url, dataType)
 	}
 
 }
