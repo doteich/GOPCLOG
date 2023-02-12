@@ -8,13 +8,16 @@ import (
 	"sync"
 	"time"
 
+	"github.com/doteich/OPC-UA-Logger/exporters/websockets"
 	"github.com/doteich/OPC-UA-Logger/setup"
 	"github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/monitor"
 	"github.com/gopcua/opcua/ua"
 )
 
-func CreateOPCUAMonitor(config setup.Config) {
+var opcclient *opcua.Client
+
+func CreateOPCUAMonitor(config *setup.Config) {
 	signalCh := make(chan os.Signal, 1)
 	signal.Notify(signalCh, os.Interrupt)
 
@@ -29,22 +32,24 @@ func CreateOPCUAMonitor(config setup.Config) {
 
 	ep := ValidateEndpoint(ctx, config.ClientConfig.Url, config.ClientConfig.SecurityPolicy, config.ClientConfig.SecurityMode)
 
-	connectionParams := SetClientOptions(&config, ep)
+	connectionParams := SetClientOptions(config, ep)
 
-	client := CreateClientConnection(config.ClientConfig.Url, connectionParams)
-	err := client.Connect(ctx)
+	opcclient = CreateClientConnection(config.ClientConfig.Url, connectionParams)
+	err := opcclient.Connect(ctx)
 
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	defer client.CloseSessionWithContext(ctx)
+	defer opcclient.CloseSessionWithContext(ctx)
 
-	nodeMonitor, err := monitor.NewNodeMonitor(client)
+	nodeMonitor, err := monitor.NewNodeMonitor(opcclient)
 
 	if err != nil {
 		panic("Failed to setup monitor")
 	}
+
+	websockets.InitOPCUARead(opcclient)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)

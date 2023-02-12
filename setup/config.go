@@ -54,7 +54,9 @@ type WebsocketConfig struct {
 	Enabled bool `mapstructure:"enabled"`
 }
 
-func SetConfig() Config {
+var PubConfig Config
+
+func SetConfig() *Config {
 	viper.AddConfigPath("/etc/config")
 	viper.SetConfigName("config")
 	viper.SetConfigType("json")
@@ -66,17 +68,15 @@ func SetConfig() Config {
 
 	// Mount Secret to the application from env
 
-	var c Config
+	viper.Unmarshal(&PubConfig)
 
-	viper.Unmarshal(&c)
-
-	if c.ClientConfig.AuthType != "Anonymous" {
+	if PubConfig.ClientConfig.AuthType != "Anonymous" {
 		user := os.Getenv("OPCUA_USERNAME")
 		pw := os.Getenv("OPCUA_PASSWORD")
 
-		c.ClientConfig.Username = user
-		c.ClientConfig.Password = pw
+		PubConfig.ClientConfig.Username = user
+		PubConfig.ClientConfig.Password = pw
 	}
 
-	return c
+	return &PubConfig
 }
