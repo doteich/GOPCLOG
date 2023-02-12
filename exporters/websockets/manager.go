@@ -45,6 +45,7 @@ func (m *Manager) ServeWS(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("New Client added")
 
 	go newClient.writeMessages()
+	go newClient.readMessages()
 
 }
 

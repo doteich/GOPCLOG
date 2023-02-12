@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/gopcua/opcua"
 )
 
 type Payload struct {
@@ -17,11 +19,17 @@ type Payload struct {
 	DataType  string      `json:"dataType"`
 }
 
+var ws_opcclient *opcua.Client
+
 func InitWebsockets() {
 
 	RouteHandler()
 	http.ListenAndServe(":8080", nil)
 
+}
+
+func InitOPCUARead(c *opcua.Client) {
+	ws_opcclient = c
 }
 
 func RouteHandler() {

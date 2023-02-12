@@ -19,11 +19,12 @@ type Exporters struct {
 }
 
 var EnabledExporters Exporters
-var PubConfig setup.Config
+
+//var PubConfig setup.Config
 
 func InitExporters(config *setup.Config) {
 
-	PubConfig = *config
+	//PubConfig = *config
 
 	namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
 	go metrics_exporter.ExposeMetrics(namespace)
@@ -92,7 +93,7 @@ func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 	}
 
 	if EnabledExporters.Rest {
-		http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, PubConfig.LoggerConfig.Name, PubConfig.ClientConfig.Url, dataType)
+		http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
 	}
 
 	if EnabledExporters.Prometheus && (dataType != "bool" && dataType != "string") {
@@ -102,13 +103,13 @@ func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 
 	if EnabledExporters.Websockets {
 
-		websockets.BroadcastToWebsocket(node.NodeId, node.NodeName, iface, timestamp, PubConfig.LoggerConfig.Name, PubConfig.ClientConfig.Url, dataType)
+		websockets.BroadcastToWebsocket(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
 	}
 
 }
 
 func findNodeDetails(nodeId string) (setup.NodeObject, error) {
-	for _, node := range PubConfig.Nodes {
+	for _, node := range setup.PubConfig.Nodes {
 		if nodeId == node.NodeId {
 			return node, nil
 		}
