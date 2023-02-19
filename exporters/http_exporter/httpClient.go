@@ -23,7 +23,7 @@ var bufferSize int = 0
 var retryInProgress bool = false
 
 type Payload struct {
-	NodeId    string      `json:"nodeid"`
+	NodeId    string      `json:"nodeId"`
 	NodeName  string      `json:"nodeName"`
 	Value     interface{} `json:"value"` // Data type could be either uint32,string, float32, int16
 	Timestamp time.Time   `json:"timestamp"`

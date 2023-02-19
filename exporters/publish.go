@@ -3,11 +3,11 @@ package exporter
 import (
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/doteich/OPC-UA-Logger/exporters/http_exporter"
 	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
+	"github.com/doteich/OPC-UA-Logger/exporters/mongodb"
 	"github.com/doteich/OPC-UA-Logger/exporters/websockets"
 	"github.com/doteich/OPC-UA-Logger/setup"
 )
@@ -26,23 +26,25 @@ func InitExporters(config *setup.Config) {
 
 	//PubConfig = *config
 
-	namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
-	go metrics_exporter.ExposeMetrics(namespace)
+	mongodb.CreateConnection()
 
-	if config.ExporterConfig.Rest.Enabled {
-		EnabledExporters.Rest = true
-		http_exporter.InitRoutes(config.ExporterConfig.Rest.URL)
-	}
+	// namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
+	// go metrics_exporter.ExposeMetrics(namespace)
 
-	if config.ExporterConfig.Prometheus.Enabled {
-		EnabledExporters.Prometheus = true
+	// if config.ExporterConfig.Rest.Enabled {
+	// 	EnabledExporters.Rest = true
+	// 	http_exporter.InitRoutes(config.ExporterConfig.Rest.URL)
+	// }
 
-	}
+	// if config.ExporterConfig.Prometheus.Enabled {
+	// 	EnabledExporters.Prometheus = true
 
-	if config.ExporterConfig.Websockets.Enabled {
-		EnabledExporters.Websockets = true
-		go websockets.InitWebsockets()
-	}
+	// }
+
+	// if config.ExporterConfig.Websockets.Enabled {
+	// 	EnabledExporters.Websockets = true
+	// 	go websockets.InitWebsockets()
+	// }
 
 }
 
@@ -91,6 +93,8 @@ func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 		fmt.Println(err)
 		return
 	}
+
+	mongodb.WriteData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
 
 	if EnabledExporters.Rest {
 		http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
