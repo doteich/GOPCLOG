@@ -3,6 +3,7 @@ package exporter
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/doteich/OPC-UA-Logger/exporters/http_exporter"
@@ -26,25 +27,25 @@ func InitExporters(config *setup.Config) {
 
 	//PubConfig = *config
 
-	mongodb.CreateConnection()
+	//mongodb.CreateConnection()
 
-	// namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
-	// go metrics_exporter.ExposeMetrics(namespace)
+	namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
+	go metrics_exporter.ExposeMetrics(namespace)
 
-	// if config.ExporterConfig.Rest.Enabled {
-	// 	EnabledExporters.Rest = true
-	// 	http_exporter.InitRoutes(config.ExporterConfig.Rest.URL)
-	// }
+	if config.ExporterConfig.Rest.Enabled {
+		EnabledExporters.Rest = true
+		http_exporter.InitRoutes(config.ExporterConfig.Rest.URL)
+	}
 
-	// if config.ExporterConfig.Prometheus.Enabled {
-	// 	EnabledExporters.Prometheus = true
+	if config.ExporterConfig.Prometheus.Enabled {
+		EnabledExporters.Prometheus = true
 
-	// }
+	}
 
-	// if config.ExporterConfig.Websockets.Enabled {
-	// 	EnabledExporters.Websockets = true
-	// 	go websockets.InitWebsockets()
-	// }
+	if config.ExporterConfig.Websockets.Enabled {
+		EnabledExporters.Websockets = true
+		go websockets.InitWebsockets()
+	}
 
 }
 
