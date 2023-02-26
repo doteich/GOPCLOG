@@ -39,6 +39,7 @@ type Exporters struct {
 	Prometheus PrometheusConfig `mapstructure:"prometheus"`
 	Rest       RestConfig       `mapstructure:"rest"`
 	Websockets WebsocketConfig  `mapstructure:"websockets"`
+	MongoDB    MongoDBConfig    `mapstructure:"mongodb"`
 }
 
 type PrometheusConfig struct {
@@ -52,6 +53,14 @@ type RestConfig struct {
 
 type WebsocketConfig struct {
 	Enabled bool `mapstructure:"enabled"`
+}
+
+type MongoDBConfig struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	URL      string `mapstructure:"url"`
+	Port     int    `mapstructure:"port"`
+	Username string
+	Password string
 }
 
 var PubConfig Config
@@ -71,11 +80,13 @@ func SetConfig() *Config {
 	viper.Unmarshal(&PubConfig)
 
 	if PubConfig.ClientConfig.AuthType != "Anonymous" {
-		user := os.Getenv("OPCUA_USERNAME")
-		pw := os.Getenv("OPCUA_PASSWORD")
+		PubConfig.ClientConfig.Username = os.Getenv("OPCUA_USERNAME")
+		PubConfig.ClientConfig.Password = os.Getenv("OPCUA_PASSWORD")
+	}
 
-		PubConfig.ClientConfig.Username = user
-		PubConfig.ClientConfig.Password = pw
+	if PubConfig.ExporterConfig.MongoDB.Enabled {
+		PubConfig.ExporterConfig.MongoDB.Username = os.Getenv("MONGODB_USERNAME")
+		PubConfig.ExporterConfig.MongoDB.Password = os.Getenv("MONGODB_PASSWORD")
 	}
 
 	return &PubConfig

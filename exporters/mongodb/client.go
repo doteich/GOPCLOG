@@ -10,8 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
-const connectionURL = "mongodb://{{USER}}:{{PASSWORD}}@{{IP}}:{{PORT}}/?directConnection=true"
-
 var ctx context.Context
 var MongoClient *mongo.Client
 
@@ -29,8 +27,11 @@ type MetaData struct {
 	DataType string `bson:"dataType"`
 }
 
-func CreateConnection() {
+func CreateConnection(namespace string, username string, password string, url string, port int) {
 	ctx = context.Background()
+
+	connectionURL := "mongodb://" + username + ":" + password + "@" + url + ":" + fmt.Sprint(port) + "/?directConnection=true"
+
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionURL))
 
 	MongoClient = client
@@ -39,21 +40,15 @@ func CreateConnection() {
 		fmt.Printf("Error while create MongoDB Connection: %v", err)
 	}
 
-	// defer func() {
-	// 	err := MongoClient.Disconnect(ctx)
-
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-	// }()
-
 	err = MongoClient.Ping(ctx, readpref.Primary())
 
 	if err != nil {
 		panic(err)
 	}
 
-	//go CheckConn()
+	opts := options.CreateCollection().SetTimeSeriesOptions(options.TimeSeries().SetGranularity("seconds").SetMetaField("meta").SetTimeField("ts"))
+
+	MongoClient.Database("machine-data").CreateCollection(ctx, namespace, opts)
 
 	fmt.Println("Successfully connected and pinged.")
 }
@@ -76,17 +71,16 @@ func CheckConn() {
 	}
 }
 
-func WriteData(nodeId string, nodeName string, value interface{}, timestamp time.Time, logName string, server string, datatype string) {
-	coll := MongoClient.Database("machine-data").Collection("machine1")
+func WriteData(nodeId string, nodeName string, value interface{}, timestamp time.Time, logName string, server string, datatype string, namespace string) {
+	coll := MongoClient.Database("machine-data").Collection(namespace)
 
 	meta := MetaData{NodeId: nodeId, NodeName: nodeName, LogName: logName, Server: server, DataType: datatype}
 	newEntry := DBEntry{Meta: meta, Timestamp: timestamp, Value: value}
 
-	result, err := coll.InsertOne(ctx, newEntry)
+	_, err := coll.InsertOne(ctx, newEntry)
 
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	fmt.Printf("Inserted document with _id: %v\n", result.InsertedID)
 }

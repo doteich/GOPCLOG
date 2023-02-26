@@ -8,6 +8,7 @@ import (
 
 	"github.com/doteich/OPC-UA-Logger/exporters/http_exporter"
 	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
+	"github.com/doteich/OPC-UA-Logger/exporters/mongodb"
 	"github.com/doteich/OPC-UA-Logger/exporters/websockets"
 	"github.com/doteich/OPC-UA-Logger/setup"
 )
@@ -16,9 +17,11 @@ type Exporters struct {
 	Rest       bool
 	Prometheus bool
 	Websockets bool
+	MongoDB    bool
 }
 
 var EnabledExporters Exporters
+var namespace string
 
 //var PubConfig setup.Config
 
@@ -26,9 +29,8 @@ func InitExporters(config *setup.Config) {
 
 	//PubConfig = *config
 
-	//mongodb.CreateConnection()
+	namespace = strings.Replace(config.LoggerConfig.Name, " ", "", -1)
 
-	namespace := strings.Replace(config.LoggerConfig.Name, " ", "", -1)
 	go metrics_exporter.ExposeMetrics(namespace)
 
 	if config.ExporterConfig.Rest.Enabled {
@@ -44,6 +46,11 @@ func InitExporters(config *setup.Config) {
 	if config.ExporterConfig.Websockets.Enabled {
 		EnabledExporters.Websockets = true
 		go websockets.InitWebsockets()
+	}
+
+	if config.ExporterConfig.MongoDB.Enabled {
+		EnabledExporters.MongoDB = true
+		mongodb.CreateConnection(namespace, config.ExporterConfig.MongoDB.Username, config.ExporterConfig.MongoDB.Password, config.ExporterConfig.MongoDB.URL, config.ExporterConfig.MongoDB.Port)
 	}
 
 }
@@ -94,8 +101,6 @@ func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 		return
 	}
 
-	//mongodb.WriteData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
-
 	if EnabledExporters.Rest {
 		http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
 	}
@@ -108,6 +113,10 @@ func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 	if EnabledExporters.Websockets {
 
 		websockets.BroadcastToWebsocket(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
+	}
+
+	if EnabledExporters.MongoDB {
+		mongodb.WriteData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType, namespace)
 	}
 
 }

@@ -63,11 +63,12 @@ func sendPodData(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 		} else {
+
 			podName := "opcua-datalogger" + setId()
 
-			secret := body.Parent.Spec.SecretRef
+			//secret := body.Parent.Spec.SecretRef
 
-			newPod := controller.SpawnPod(podName, secret)
+			newPod := controller.SpawnPod(podName, body.Parent.Spec.Data)
 			newConfigmap := controller.SpawnCM(body.Parent.Spec.Data, podName)
 
 			var childs ChildElements
@@ -84,6 +85,7 @@ func sendPodData(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				fmt.Println(err)
 			}
+
 			w.Header().Add("Content-Type", "application/json")
 			w.WriteHeader(http.StatusOK)
 			w.Write(json)

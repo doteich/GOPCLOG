@@ -1,5 +1,9 @@
 package controller
 
+import (
+	"encoding/json"
+)
+
 type Pod struct {
 	ApiVersion string   `json:"apiVersion"`
 	Kind       string   `json:"kind"`
@@ -67,28 +71,17 @@ type EnvVar struct {
 	} `json:"valueFrom"`
 }
 
-func SpawnPod(podId string, secret string) Pod {
+func SpawnPod(podId string, data string) Pod {
 
-	var container Container
+	//var container Container
 
-	if len(secret) > 0 {
-		var userEnv EnvVar
-		userEnv.Name = "OPCUA_USERNAME"
-		userEnv.ValueFrom.SecretKeyRef.Name = secret
-		userEnv.ValueFrom.SecretKeyRef.Key = "username"
-		userEnv.ValueFrom.SecretKeyRef.Optional = false
+	//container = Container{Name: podId, Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}, Ports: []ContainerPorts{{ContainerPort: 4444}}, EnvVars: []EnvVar{userEnv, pwEnv}}
 
-		var pwEnv EnvVar
-		pwEnv.Name = "OPCUA_PASSWORD"
-		pwEnv.ValueFrom.SecretKeyRef.Name = secret
-		pwEnv.ValueFrom.SecretKeyRef.Key = "password"
-		pwEnv.ValueFrom.SecretKeyRef.Optional = false
+	envs := setSecretVars(data)
 
-		container = Container{Name: podId, Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}, Ports: []ContainerPorts{{ContainerPort: 4444}}, EnvVars: []EnvVar{userEnv, pwEnv}}
-	} else {
+	//container := Container{Name: podId, Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}, Ports: []ContainerPorts{{ContainerPort: 4444}}}
 
-		container = Container{Name: podId, Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}, Ports: []ContainerPorts{{ContainerPort: 4444}}}
-	}
+	container := Container{Name: podId, Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}, Ports: []ContainerPorts{{ContainerPort: 4444}}, EnvVars: envs}
 
 	metadata := Metadata{Name: podId, Namespace: "default", Labels: Labels{App: "opcua-datalogger"}}
 	volumes := Volumes{Name: "config-volume", ConfigMap: PodConfigMap{Name: podId + "-cm"}}
@@ -104,4 +97,67 @@ func SpawnCM(config string, podId string) ConfigMap {
 	data["config.json"] = config
 	newConfigmap := ConfigMap{ApiVersion: "v1", Kind: "ConfigMap", Metadata: Metadata{Name: podId + "-cm", Namespace: "default"}, Data: data}
 	return newConfigmap
+}
+
+func setSecretVars(data string) []EnvVar {
+
+	type OPCConfig struct {
+		SecretRef string `json:"secretRef"`
+	}
+
+	type MongoDB struct {
+		SecretRef string `json:"secretRef"`
+	}
+
+	type Exporters struct {
+		MongoDB MongoDB `json:"mongodb"`
+	}
+
+	type DataContent struct {
+		OPCConfig OPCConfig `json:"opcConfig"`
+		Exporters Exporters `json:"exporters"`
+	}
+
+	var newContent DataContent
+
+	json.Unmarshal([]byte(data), &newContent)
+
+	envs := make([]EnvVar, 0)
+	var env EnvVar
+
+	if newContent.OPCConfig.SecretRef != "" {
+
+		env.Name = "OPCUA_USERNAME"
+		env.ValueFrom.SecretKeyRef.Name = newContent.OPCConfig.SecretRef
+		env.ValueFrom.SecretKeyRef.Key = "username"
+		env.ValueFrom.SecretKeyRef.Optional = false
+
+		envs = append(envs, env)
+
+		env.Name = "OPCUA_PASSWORD"
+		env.ValueFrom.SecretKeyRef.Name = newContent.OPCConfig.SecretRef
+		env.ValueFrom.SecretKeyRef.Key = "password"
+		env.ValueFrom.SecretKeyRef.Optional = false
+
+		envs = append(envs, env)
+	}
+
+	if newContent.Exporters.MongoDB.SecretRef != "" {
+
+		env.Name = "MONGODB_USERNAME"
+		env.ValueFrom.SecretKeyRef.Name = newContent.Exporters.MongoDB.SecretRef
+		env.ValueFrom.SecretKeyRef.Key = "username"
+		env.ValueFrom.SecretKeyRef.Optional = false
+
+		envs = append(envs, env)
+
+		env.Name = "MONGODB_PASSWORD"
+		env.ValueFrom.SecretKeyRef.Name = newContent.Exporters.MongoDB.SecretRef
+		env.ValueFrom.SecretKeyRef.Key = "password"
+		env.ValueFrom.SecretKeyRef.Optional = false
+
+		envs = append(envs, env)
+	}
+
+	return envs
 }
