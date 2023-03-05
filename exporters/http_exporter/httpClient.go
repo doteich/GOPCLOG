@@ -9,7 +9,6 @@ import (
 
 	"github.com/doteich/OPC-UA-Logger/exporters/logging"
 	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
-	"go.uber.org/zap"
 )
 
 var path string
@@ -45,13 +44,13 @@ func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp
 	jsonPayload, err := json.Marshal(newPayload)
 
 	if err != nil {
-		fmt.Println(err)
+		logging.LogError(err, "Failed to marshal Payload", "http_exporter")
 	}
 
 	req, err := http.NewRequest("POST", path, bytes.NewBuffer(jsonPayload))
 
 	if err != nil {
-		fmt.Println(err)
+		logging.LogError(err, "Failed to construct http Request", "http_exporter")
 	}
 
 	req.Header.Set("Content-Type", "application/json")
@@ -60,30 +59,17 @@ func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp
 
 	if err != nil {
 
-		logging.Buffer.Error("Failed to reach "+path, zap.Any("payload", &newPayload))
-		bufferSize += 1
-		numberSuccessfulMessages = 0
 		metrics_exporter.Failed_requests.WithLabelValues(path).Inc()
-		logging.Logs.Error("Connection refused for " + path)
+		logging.LogError(err, "Connection refused for "+path, "http_exporter")
 
 	} else {
+		defer resp.Body.Close()
 		statusCode := resp.StatusCode
 		if statusCode > 399 {
-			logging.Buffer.Error("Target returned a bad response: "+fmt.Sprint(statusCode), zap.Any("payload", &newPayload))
-			bufferSize += 1
-			numberSuccessfulMessages = 0
+			logging.LogError(nil, "Target returned a bad response: "+fmt.Sprint(statusCode), "http_exporter")
 			metrics_exporter.Failed_requests.WithLabelValues(path).Inc()
-			logging.Logs.Error("Target returned a bad response: " + fmt.Sprint(statusCode))
-
 		}
 
-		numberSuccessfulMessages += 1
-
-		if numberSuccessfulMessages > retryThreshold && bufferSize > 0 && !retryInProgress {
-			go Resend()
-		}
-
-		defer resp.Body.Close()
 	}
 
 }

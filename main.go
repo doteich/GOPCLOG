@@ -16,7 +16,7 @@ func main() {
 	}
 
 	exporter.InitExporters(config)
-	logging.InitLogs()
+	logging.InitLogger()
 
 	opcua_monitor.CreateOPCUAMonitor(config)
 
