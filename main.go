@@ -10,13 +10,13 @@ import (
 func main() {
 
 	config := setup.SetConfig()
+	logging.InitLogger()
 
 	if config.ClientConfig.GenerateCert {
 		setup.GeneratePEMFiles()
 	}
 
 	exporter.InitExporters(config)
-	logging.InitLogger()
 
 	opcua_monitor.CreateOPCUAMonitor(config)
 

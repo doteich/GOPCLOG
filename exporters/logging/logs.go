@@ -69,7 +69,7 @@ func LogGeneric(lvl string, msg string, pkg string) {
 		Logger.Info(msg, slog.String("package", pkg))
 	case "warning":
 		Logger.Warn(msg, slog.String("package", pkg))
-	case "debub":
+	case "debug":
 		Logger.Debug(msg, slog.String("package", pkg))
 	}
 }

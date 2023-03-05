@@ -44,7 +44,7 @@ func CreateConnection(namespace string, username string, password string, url st
 	err = MongoClient.Ping(ctx, readpref.Primary())
 
 	if err != nil {
-		logging.LogError(err, "Failed to ping to MongoDB - Quitting routine", "mongodb")
+		logging.LogError(err, "Failed to ping to MongoDB", "mongodb")
 		panic(err)
 	}
 
