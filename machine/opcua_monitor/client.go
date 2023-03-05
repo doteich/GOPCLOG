@@ -2,12 +2,12 @@ package opcua_monitor
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"os/signal"
 	"sync"
 	"time"
 
+	"github.com/doteich/OPC-UA-Logger/exporters/logging"
 	"github.com/doteich/OPC-UA-Logger/exporters/websockets"
 	"github.com/doteich/OPC-UA-Logger/setup"
 	"github.com/gopcua/opcua"
@@ -38,7 +38,7 @@ func CreateOPCUAMonitor(config *setup.Config) {
 	err := opcclient.Connect(ctx)
 
 	if err != nil {
-		fmt.Println(err)
+		logging.LogError(err, "Error connecting to opcua server", "opcua")
 	}
 
 	defer opcclient.CloseSessionWithContext(ctx)
@@ -46,7 +46,7 @@ func CreateOPCUAMonitor(config *setup.Config) {
 	nodeMonitor, err := monitor.NewNodeMonitor(opcclient)
 
 	if err != nil {
-		panic("Failed to setup monitor")
+		logging.LogError(err, "Error while setting up the node monitor", "opcua")
 	}
 
 	websockets.InitOPCUARead(opcclient)
@@ -57,25 +57,23 @@ func CreateOPCUAMonitor(config *setup.Config) {
 	go MonitorItems(ctx, nodeMonitor, time.Duration(config.LoggerConfig.Interval*1000000000), 1000, wg, config.Nodes)
 
 	<-ctx.Done()
-	defer ShowDone()
-}
 
-func ShowDone() {
-	fmt.Println("ABORTING")
-
+	defer func() {
+		logging.LogGeneric("warning", "Shutting down opuca monitor", "opcua")
+	}()
 }
 
 func ValidateEndpoint(ctx context.Context, endpoint string, policy string, mode string) *ua.EndpointDescription {
 	endpoints, err := opcua.GetEndpoints(ctx, endpoint)
 
 	if err != nil {
-		fmt.Println(endpoint + policy + mode)
-		errorHandler(err)
+		logging.LogError(err, "No Matching Endpoint Found - Check Configuration", "opcua")
 	}
 
 	ep := opcua.SelectEndpoint(endpoints, policy, ua.MessageSecurityModeFromString(mode))
 
 	if ep == nil {
+		logging.LogError(nil, "No Matching Endpoint Found - Check Configuration", "opcua")
 		panic("No Matching Endpoint Found - Check Configuration")
 	}
 

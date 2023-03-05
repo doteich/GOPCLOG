@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	Logger *slog.TextHandler
+	Logger *slog.Logger
 )
 
 // var Logs *zap.Logger
@@ -58,5 +58,22 @@ var (
 
 func InitLogger() {
 	logOpts := slog.HandlerOptions{Level: slog.LevelInfo}
-	Logger = logOpts.NewTextHandler(os.Stdout)
+	textHandler := logOpts.NewTextHandler(os.Stdout)
+	Logger = slog.New(textHandler)
+}
+
+func LogGeneric(lvl string, msg string, pkg string) {
+
+	switch lvl {
+	case "info":
+		Logger.Info(msg, slog.String("package", pkg))
+	case "warning":
+		Logger.Warn(msg, slog.String("package", pkg))
+	case "debub":
+		Logger.Debug(msg, slog.String("package", pkg))
+	}
+}
+
+func LogError(err error, msg string, pkg string) {
+	Logger.Error(msg, err, slog.String("package", pkg))
 }

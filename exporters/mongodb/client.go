@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/doteich/OPC-UA-Logger/exporters/logging"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -34,15 +35,16 @@ func CreateConnection(namespace string, username string, password string, url st
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionURL))
 
-	MongoClient = client
-
 	if err != nil {
-		fmt.Printf("Error while create MongoDB Connection: %v", err)
+		logging.LogError(err, "Failed to connect to MongoDB", "mongodb")
 	}
+
+	MongoClient = client
 
 	err = MongoClient.Ping(ctx, readpref.Primary())
 
 	if err != nil {
+		logging.LogError(err, "Failed to ping to MongoDB - Quitting routine", "mongodb")
 		panic(err)
 	}
 
@@ -50,7 +52,8 @@ func CreateConnection(namespace string, username string, password string, url st
 
 	MongoClient.Database("machine-data").CreateCollection(ctx, namespace, opts)
 
-	fmt.Println("Successfully connected and pinged.")
+	logging.LogGeneric("info", "Successfully connected and pinged mongodb: "+url, "mongodb")
+
 }
 
 func CheckConn() {
@@ -80,7 +83,7 @@ func WriteData(nodeId string, nodeName string, value interface{}, timestamp time
 	_, err := coll.InsertOne(ctx, newEntry)
 
 	if err != nil {
-		fmt.Println(err)
+		logging.LogError(err, "Failed to insert document", "mongodb")
 	}
 
 }
