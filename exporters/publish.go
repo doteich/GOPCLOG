@@ -34,8 +34,8 @@ func InitExporters(config *setup.Config) {
 	go metrics_exporter.ExposeMetrics(namespace)
 
 	if config.ExporterConfig.Rest.Enabled {
-		EnabledExporters.Rest = true
 		http_exporter.InitRoutes(config.ExporterConfig.Rest.URL)
+		EnabledExporters.Rest = true
 	}
 
 	if config.ExporterConfig.Prometheus.Enabled {
@@ -44,13 +44,13 @@ func InitExporters(config *setup.Config) {
 	}
 
 	if config.ExporterConfig.Websockets.Enabled {
-		EnabledExporters.Websockets = true
 		go websockets.InitWebsockets()
+		EnabledExporters.Websockets = true
 	}
 
 	if config.ExporterConfig.MongoDB.Enabled {
-		EnabledExporters.MongoDB = true
 		mongodb.CreateConnection(namespace, config.ExporterConfig.MongoDB.Username, config.ExporterConfig.MongoDB.Password, config.ExporterConfig.MongoDB.URL, config.ExporterConfig.MongoDB.Port)
+		EnabledExporters.MongoDB = true
 	}
 
 }
