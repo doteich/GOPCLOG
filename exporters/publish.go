@@ -34,7 +34,7 @@ func InitExporters(config *setup.Config) {
 	go metrics_exporter.ExposeMetrics(namespace)
 
 	if config.ExporterConfig.Rest.Enabled {
-		http_exporter.InitRoutes(config.ExporterConfig.Rest.URL)
+		http_exporter.InitRoutes(config.ExporterConfig.Rest.URL, config.ExporterConfig.Rest.AuthType, config.ExporterConfig.Rest.Username, config.ExporterConfig.Rest.Password)
 		EnabledExporters.Rest = true
 	}
 

@@ -11,15 +11,12 @@ import (
 	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
 )
 
-var path string
-
-const retryThreshold uint8 = 10
-
-var numberSuccessfulMessages uint8 = 0
-
-var bufferSize int = 0
-
-var retryInProgress bool = false
+var (
+	path     string
+	auth     string
+	user     string
+	password string
+)
 
 type Payload struct {
 	NodeId    string      `json:"nodeId"`
@@ -31,8 +28,15 @@ type Payload struct {
 	DataType  string      `json:"dataType"`
 }
 
-func InitRoutes(p string) {
+func InitRoutes(p string, authType string, userName string, pw string) {
 	path = p
+
+	auth = authType
+	if authType == "Basic" {
+		user = userName
+		password = pw
+	}
+
 }
 
 func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp time.Time, logName string, server string, datatype string) {
@@ -54,6 +58,10 @@ func PostLoggedData(nodeId string, nodeName string, value interface{}, timestamp
 	}
 
 	req.Header.Set("Content-Type", "application/json")
+
+	if auth == "Basic" {
+		req.SetBasicAuth(user, password)
+	}
 
 	resp, err := client.Do(req)
 

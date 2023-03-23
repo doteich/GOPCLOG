@@ -109,8 +109,13 @@ func setSecretVars(data string) []EnvVar {
 		SecretRef string `json:"secretRef"`
 	}
 
+	type Rest struct {
+		SecretRef string `json:"secretRef"`
+	}
+
 	type Exporters struct {
 		MongoDB MongoDB `json:"mongodb"`
+		Rest    Rest    `json:"rest"`
 	}
 
 	type DataContent struct {
@@ -153,6 +158,22 @@ func setSecretVars(data string) []EnvVar {
 
 		env.Name = "MONGODB_PASSWORD"
 		env.ValueFrom.SecretKeyRef.Name = newContent.Exporters.MongoDB.SecretRef
+		env.ValueFrom.SecretKeyRef.Key = "password"
+		env.ValueFrom.SecretKeyRef.Optional = false
+
+		envs = append(envs, env)
+	}
+
+	if newContent.Exporters.Rest.SecretRef != "" {
+		env.Name = "REST_USERNAME"
+		env.ValueFrom.SecretKeyRef.Name = newContent.Exporters.Rest.SecretRef
+		env.ValueFrom.SecretKeyRef.Key = "username"
+		env.ValueFrom.SecretKeyRef.Optional = false
+
+		envs = append(envs, env)
+
+		env.Name = "REST_PASSWORD"
+		env.ValueFrom.SecretKeyRef.Name = newContent.Exporters.Rest.SecretRef
 		env.ValueFrom.SecretKeyRef.Key = "password"
 		env.ValueFrom.SecretKeyRef.Optional = false
 

@@ -47,8 +47,11 @@ type PrometheusConfig struct {
 }
 
 type RestConfig struct {
-	Enabled bool   `mapstructure:"enabled"`
-	URL     string `mapstructure:"targetURL"`
+	Enabled  bool   `mapstructure:"enabled"`
+	URL      string `mapstructure:"targetURL"`
+	AuthType string `mapstructure:"authType"`
+	Username string
+	Password string
 }
 
 type WebsocketConfig struct {
@@ -87,6 +90,11 @@ func SetConfig() *Config {
 	if PubConfig.ExporterConfig.MongoDB.Enabled {
 		PubConfig.ExporterConfig.MongoDB.Username = os.Getenv("MONGODB_USERNAME")
 		PubConfig.ExporterConfig.MongoDB.Password = os.Getenv("MONGODB_PASSWORD")
+	}
+
+	if PubConfig.ExporterConfig.Rest.AuthType == "Basic" {
+		PubConfig.ExporterConfig.Rest.Username = os.Getenv("REST_USERNAME")
+		PubConfig.ExporterConfig.Rest.Password = os.Getenv("REST_PASSWORD")
 	}
 
 	return &PubConfig
