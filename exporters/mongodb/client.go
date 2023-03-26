@@ -28,10 +28,16 @@ type MetaData struct {
 	DataType string `bson:"dataType"`
 }
 
-func CreateConnection(namespace string, username string, password string, url string, port int) {
+func CreateConnection(namespace string, username string, password string, connectionString string, connectionType string) {
 	ctx = context.Background()
 
-	connectionURL := "mongodb://" + username + ":" + password + "@" + url + ":" + fmt.Sprint(port) + "/?directConnection=true"
+	var connectionURL string
+
+	if connectionType == "srv" {
+		connectionURL = "mongodb+srv://" + username + ":" + password + "@" + connectionString
+	} else {
+		connectionURL = "mongodb://" + username + ":" + password + "@" + connectionString
+	}
 
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(connectionURL))
 
@@ -52,7 +58,7 @@ func CreateConnection(namespace string, username string, password string, url st
 
 	MongoClient.Database("machine-data").CreateCollection(ctx, namespace, opts)
 
-	logging.LogGeneric("info", "Successfully connected and pinged mongodb: "+url, "mongodb")
+	logging.LogGeneric("info", "Successfully connected and pinged mongodb: "+connectionString, "mongodb")
 
 }
 

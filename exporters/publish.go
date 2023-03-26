@@ -49,7 +49,7 @@ func InitExporters(config *setup.Config) {
 	}
 
 	if config.ExporterConfig.MongoDB.Enabled {
-		mongodb.CreateConnection(namespace, config.ExporterConfig.MongoDB.Username, config.ExporterConfig.MongoDB.Password, config.ExporterConfig.MongoDB.URL, config.ExporterConfig.MongoDB.Port)
+		mongodb.CreateConnection(namespace, config.ExporterConfig.MongoDB.Username, config.ExporterConfig.MongoDB.Password, config.ExporterConfig.MongoDB.ConnectionString, config.ExporterConfig.MongoDB.ConnectionType)
 		EnabledExporters.MongoDB = true
 	}
 

@@ -59,11 +59,11 @@ type WebsocketConfig struct {
 }
 
 type MongoDBConfig struct {
-	Enabled  bool   `mapstructure:"enabled"`
-	URL      string `mapstructure:"url"`
-	Port     int    `mapstructure:"port"`
-	Username string
-	Password string
+	Enabled          bool   `mapstructure:"enabled"`
+	ConnectionType   string `mapstructure:"connectionType"`
+	ConnectionString string `mapstructure:"connectionString"`
+	Username         string
+	Password         string
 }
 
 var PubConfig Config
