@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	exporter "github.com/doteich/OPC-UA-Logger/exporters"
 	"github.com/doteich/OPC-UA-Logger/exporters/logging"
 	"github.com/doteich/OPC-UA-Logger/exporters/websockets"
 	"github.com/doteich/OPC-UA-Logger/setup"
@@ -50,6 +51,7 @@ func CreateOPCUAMonitor(config *setup.Config) {
 	}
 
 	websockets.InitOPCUARead(opcclient)
+	exporter.SetOPCUAClient(opcclient)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)

@@ -1,11 +1,8 @@
 package metrics_exporter
 
 import (
-	"net/http"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var custom_gauge *prometheus.GaugeVec
@@ -19,9 +16,6 @@ func ExposeMetrics(namespace string) {
 	custom_counter = promauto.NewGaugeVec(prometheus.GaugeOpts{Namespace: namespace, Name: "custom_counter_metric", Help: "Metric for collecting gopclog counter type tag values"}, []string{"NodeId", "NodeName"})
 	custom_technical_counter = promauto.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Name: "custom_technical_counter_metric", Help: "Metric for collecting gopclog technical counter type tag values"}, []string{"NodeId", "NodeName"})
 	Failed_requests = promauto.NewCounterVec(prometheus.CounterOpts{Namespace: namespace, Name: "number_failed_request", Help: "Metric for collecting gopclog number of failed request to the specified target URL"}, []string{"url"})
-
-	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(":4444", nil)
 
 }
 

@@ -2,11 +2,11 @@ package exporter
 
 import (
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
 	"github.com/doteich/OPC-UA-Logger/exporters/http_exporter"
+	"github.com/doteich/OPC-UA-Logger/exporters/logging"
 	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
 	"github.com/doteich/OPC-UA-Logger/exporters/mongodb"
 	"github.com/doteich/OPC-UA-Logger/exporters/websockets"
@@ -31,7 +31,7 @@ func InitExporters(config *setup.Config) {
 
 	namespace = strings.Replace(config.LoggerConfig.Name, " ", "", -1)
 
-	go metrics_exporter.ExposeMetrics(namespace)
+	metrics_exporter.ExposeMetrics(namespace)
 
 	if config.ExporterConfig.Rest.Enabled {
 		http_exporter.InitRoutes(config.ExporterConfig.Rest.URL, config.ExporterConfig.Rest.AuthType, config.ExporterConfig.Rest.Username, config.ExporterConfig.Rest.Password)
@@ -53,10 +53,50 @@ func InitExporters(config *setup.Config) {
 		EnabledExporters.MongoDB = true
 	}
 
+	go InitHTTPServer()
+
 }
 
 func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 
+	dataType, metricsValue := InferDataType(iface)
+	node, err := findNodeDetails(nodeId)
+
+	if err != nil {
+		logging.LogError(err, "unknown node", "exporter")
+		return
+	}
+
+	if EnabledExporters.Rest {
+		http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
+	}
+
+	if EnabledExporters.Prometheus && (dataType != "bool" && dataType != "string") {
+
+		metrics_exporter.SetMetricsValue(node.MetricsType, nodeId, node.NodeName, metricsValue)
+	}
+
+	if EnabledExporters.Websockets {
+
+		websockets.BroadcastToWebsocket(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
+	}
+
+	if EnabledExporters.MongoDB {
+		mongodb.WriteData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType, namespace)
+	}
+
+}
+
+func findNodeDetails(nodeId string) (setup.NodeObject, error) {
+	for _, node := range setup.PubConfig.Nodes {
+		if nodeId == node.NodeId {
+			return node, nil
+		}
+	}
+	return setup.NodeObject{}, errors.New("node not found")
+}
+
+func InferDataType(iface interface{}) (string, float64) {
 	var dataType string
 	var metricsValue float64
 
@@ -94,38 +134,5 @@ func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 		dataType = "bool"
 	}
 
-	node, err := findNodeDetails(nodeId)
-
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-
-	if EnabledExporters.Rest {
-		http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
-	}
-
-	if EnabledExporters.Prometheus && (dataType != "bool" && dataType != "string") {
-
-		metrics_exporter.SetMetricsValue(node.MetricsType, nodeId, node.NodeName, metricsValue)
-	}
-
-	if EnabledExporters.Websockets {
-
-		websockets.BroadcastToWebsocket(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
-	}
-
-	if EnabledExporters.MongoDB {
-		mongodb.WriteData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType, namespace)
-	}
-
-}
-
-func findNodeDetails(nodeId string) (setup.NodeObject, error) {
-	for _, node := range setup.PubConfig.Nodes {
-		if nodeId == node.NodeId {
-			return node, nil
-		}
-	}
-	return setup.NodeObject{}, errors.New("node not found")
+	return dataType, metricsValue
 }
