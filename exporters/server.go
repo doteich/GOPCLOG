@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -14,11 +15,21 @@ import (
 
 var (
 	http_opcclient *opcua.Client
+	username       string
+	password       string
+	authEnabled    bool
 )
 
 func InitHTTPServer() {
 	if EnabledExporters.Rest {
 		http.HandleFunc("/triggerread", ReadFromOPC)
+
+		if setup.PubConfig.ExporterConfig.Rest.AuthType == "Basic" {
+			authEnabled = true
+			username = setup.PubConfig.ExporterConfig.Rest.Username
+			password = setup.PubConfig.ExporterConfig.Rest.Password
+		}
+
 	}
 
 	http.Handle("/metrics", promhttp.Handler())
@@ -30,26 +41,64 @@ func SetOPCUAClient(mainClient *opcua.Client) {
 }
 
 func ReadFromOPC(w http.ResponseWriter, r *http.Request) {
-	if r.Method == "GET" {
-		if http_opcclient == nil {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		} else {
-			w.WriteHeader(http.StatusOK)
-			nodes := TriggerBulkRead()
 
-			for key, val := range nodes {
-				nodeObj, _ := findNodeDetails(key)
-				dataType, _ := InferDataType(val)
-				http_exporter.PostLoggedData(key, nodeObj.NodeName, val, time.Now(), setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
+	if http_opcclient == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	if r.Method == "GET" {
+
+		if authEnabled {
+			u, p, ok := r.BasicAuth()
+
+			if !ok {
+				logging.LogGeneric("warning", "error parsing basic auth credentials", "exporter")
+				w.WriteHeader(401)
+				return
 			}
-			return
+
+			err := validateAuth(u, p)
+
+			if err != nil {
+				logging.LogError(err, "unauthorized", "exporter")
+				w.WriteHeader(401)
+				return
+			}
+
 		}
+
+		w.WriteHeader(http.StatusOK)
+		nodes := TriggerBulkRead()
+
+		for key, val := range nodes {
+			nodeObj, err := findNodeDetails(key)
+
+			if err != nil {
+				logging.LogError(err, "node not found while reading from opc server", "exporter")
+				continue
+			}
+
+			dataType, _ := InferDataType(val)
+			http_exporter.PostLoggedData(key, nodeObj.NodeName, val, time.Now(), setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
+		}
+		return
 
 	} else {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+}
+
+func validateAuth(user string, pw string) error {
+	if user != username {
+		return errors.New("wrong username")
+	}
+	if pw != password {
+		return errors.New("wrong password")
+	}
+	return nil
+
 }
 
 func ReadNodes(nodeId string) (interface{}, error) {
