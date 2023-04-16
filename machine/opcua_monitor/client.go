@@ -89,6 +89,8 @@ func SetClientOptions(config *setup.Config, ep *ua.EndpointDescription) []opcua.
 	connectionParams := []opcua.Option{
 		opcua.SecurityPolicy(config.ClientConfig.SecurityPolicy),
 		opcua.SecurityModeString(config.ClientConfig.SecurityMode),
+		opcua.AutoReconnect(true),
+		opcua.ReconnectInterval(time.Second * 20),
 	}
 
 	if config.ClientConfig.SecurityMode != "None" || config.ClientConfig.SecurityPolicy != "None" {
