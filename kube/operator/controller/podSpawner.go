@@ -2,7 +2,35 @@ package controller
 
 import (
 	"encoding/json"
+	"strings"
 )
+
+type OPCConfig struct {
+	SecretRef string `json:"secretRef"`
+}
+
+type MethodConfig struct {
+	Name string `json:"name"`
+}
+
+type MongoDB struct {
+	SecretRef string `json:"secretRef"`
+}
+
+type Rest struct {
+	SecretRef string `json:"secretRef"`
+}
+
+type Exporters struct {
+	MongoDB MongoDB `json:"mongodb"`
+	Rest    Rest    `json:"rest"`
+}
+
+type DataContent struct {
+	OPCConfig    OPCConfig    `json:"opcConfig"`
+	Exporters    Exporters    `json:"exporters"`
+	MethodConfig MethodConfig `json:"methodConfig"`
+}
 
 type Pod struct {
 	ApiVersion string   `json:"apiVersion"`
@@ -19,6 +47,7 @@ type Metadata struct {
 
 type Labels struct {
 	App string `json:"app"`
+	Id  string `json:"id"`
 }
 
 type Spec struct {
@@ -73,17 +102,11 @@ type EnvVar struct {
 
 func SpawnPod(podId string, data string) Pod {
 
-	//var container Container
-
-	//container = Container{Name: podId, Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}, Ports: []ContainerPorts{{ContainerPort: 4444}}, EnvVars: []EnvVar{userEnv, pwEnv}}
-
-	envs := setSecretVars(data)
-
-	//container := Container{Name: podId, Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}, Ports: []ContainerPorts{{ContainerPort: 4444}}}
+	envs, id := setVarPodData(data)
 
 	container := Container{Name: podId, Image: "cinderstries/opcua-logger", VolumeMounts: []VolumeMounts{{Name: "config-volume", Mountpath: "/etc/config"}}, Ports: []ContainerPorts{{ContainerPort: 4444}}, EnvVars: envs}
 
-	metadata := Metadata{Name: podId, Namespace: "default", Labels: Labels{App: "opcua-datalogger"}}
+	metadata := Metadata{Name: podId, Namespace: "default", Labels: Labels{App: "opcua-datalogger", Id: id}}
 	volumes := Volumes{Name: "config-volume", ConfigMap: PodConfigMap{Name: podId + "-cm"}}
 	spec := Spec{RestartPolicy: "OnFailure", Containers: []Container{container}, Volumes: []Volumes{volumes}}
 
@@ -99,29 +122,7 @@ func SpawnCM(config string, podId string) ConfigMap {
 	return newConfigmap
 }
 
-func setSecretVars(data string) []EnvVar {
-
-	type OPCConfig struct {
-		SecretRef string `json:"secretRef"`
-	}
-
-	type MongoDB struct {
-		SecretRef string `json:"secretRef"`
-	}
-
-	type Rest struct {
-		SecretRef string `json:"secretRef"`
-	}
-
-	type Exporters struct {
-		MongoDB MongoDB `json:"mongodb"`
-		Rest    Rest    `json:"rest"`
-	}
-
-	type DataContent struct {
-		OPCConfig OPCConfig `json:"opcConfig"`
-		Exporters Exporters `json:"exporters"`
-	}
+func setVarPodData(data string) ([]EnvVar, string) {
 
 	var newContent DataContent
 
@@ -180,5 +181,5 @@ func setSecretVars(data string) []EnvVar {
 		envs = append(envs, env)
 	}
 
-	return envs
+	return envs, strings.ReplaceAll(newContent.MethodConfig.Name, " ", "")
 }

@@ -16,10 +16,9 @@ type ChildElements struct {
 }
 
 type DesiredResourceNumbers struct {
-	Pods            int8 `json:"pods"`
-	ConfigMaps      int8 `json:"configmaps"`
-	Services        int8 `json:"services"`
-	ServiceMonitors int8 `json:"servicemonitors"`
+	Pods       int8 `json:"pods"`
+	ConfigMaps int8 `json:"configmaps"`
+	Services   int8 `json:"services"`
 }
 
 type Request struct {
@@ -36,8 +35,7 @@ type Parent struct {
 }
 
 type RequestSpec struct {
-	Data      string `json:"data"`
-	SecretRef string `json:"secretRef"`
+	Data string `json:"data"`
 }
 
 func main() {
@@ -70,15 +68,17 @@ func sendPodData(w http.ResponseWriter, r *http.Request) {
 
 			newPod := controller.SpawnPod(podName, body.Parent.Spec.Data)
 			newConfigmap := controller.SpawnCM(body.Parent.Spec.Data, podName)
+			newService := controller.SpawnService(podName, body.Parent.Spec.Data)
 
 			var childs ChildElements
 			childs.Children = append(childs.Children, newPod)
 			childs.Children = append(childs.Children, newConfigmap)
+			childs.Children = append(childs.Children, newService)
 
 			childs.Status.Pods = 1
 			childs.Status.ConfigMaps = 1
-			childs.Status.Pods = 1
-			childs.Status.ServiceMonitors = 1
+			//childs.Status.Pods = 1
+			childs.Status.Services = 1
 
 			json, err := json.Marshal(childs)
 
