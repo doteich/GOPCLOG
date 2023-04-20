@@ -63,12 +63,11 @@ func sendPodData(w http.ResponseWriter, r *http.Request) {
 		} else {
 
 			podName := "opcua-datalogger" + setId()
-
-			//secret := body.Parent.Spec.SecretRef
+			svcName := "opcua-datalogger-svc" + setId()
 
 			newPod := controller.SpawnPod(podName, body.Parent.Spec.Data)
 			newConfigmap := controller.SpawnCM(body.Parent.Spec.Data, podName)
-			newService := controller.SpawnService(podName, body.Parent.Spec.Data)
+			newService := controller.SpawnService(svcName, body.Parent.Spec.Data)
 
 			var childs ChildElements
 			childs.Children = append(childs.Children, newPod)
@@ -77,7 +76,6 @@ func sendPodData(w http.ResponseWriter, r *http.Request) {
 
 			childs.Status.Pods = 1
 			childs.Status.ConfigMaps = 1
-			//childs.Status.Pods = 1
 			childs.Status.Services = 1
 
 			json, err := json.Marshal(childs)
