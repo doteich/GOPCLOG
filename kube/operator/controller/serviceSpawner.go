@@ -25,8 +25,7 @@ type ServiceSpec struct {
 	Ports    []Port `json:"ports"`
 	Type     string `json:"type"`
 	Selector struct {
-		App string `json:"app"`
-		Id  string `json:"id"`
+		Id string `json:"id"`
 	} `json:"selector"`
 }
 
@@ -58,7 +57,6 @@ func SpawnService(podId string, data string) Service {
 	}
 
 	spec := ServiceSpec{Ports: []Port{miscPort, socketPort}, Type: "ClusterIP"}
-	spec.Selector.App = "opcua-datalogger"
 	spec.Selector.Id = id
 
 	metadata := ServiceMetadata{Name: podId, Namespace: "default", Labels: Labels{App: "opcua-datalogger", Id: id}}
