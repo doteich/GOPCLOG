@@ -56,13 +56,18 @@ func CreateOPCUAMonitor(config *setup.Config) {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	go MonitorItems(ctx, nodeMonitor, time.Duration(config.LoggerConfig.Interval*1000000000), 1000, wg, config.Nodes)
+	go MonitorItems(ctx, nodeMonitor, time.Duration(config.LoggerConfig.Interval), 1000, wg, config.Nodes)
+
+	wg.Add(1)
+
+	go StartKeepAlive(ctx, nodeMonitor, 1000, wg)
 
 	<-ctx.Done()
 
 	defer func() {
 		logging.LogGeneric("warning", "Shutting down opuca monitor", "opcua")
 	}()
+	wg.Wait()
 }
 
 func ValidateEndpoint(ctx context.Context, endpoint string, policy string, mode string) *ua.EndpointDescription {

@@ -24,7 +24,7 @@ func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interva
 		nodeArr = append(nodeArr, node.NodeId)
 	}
 
-	sub, err := nodeMonitor.ChanSubscribe(ctx, &opcua.SubscriptionParameters{Interval: interval}, ch, nodeArr...)
+	sub, err := nodeMonitor.ChanSubscribe(ctx, &opcua.SubscriptionParameters{Interval: interval * time.Second, Priority: 100}, ch, nodeArr...)
 
 	if err != nil {
 		logging.LogError(err, "Error starting the subscription", "opcua")
