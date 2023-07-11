@@ -56,7 +56,7 @@ func CreateOPCUAMonitor(config *setup.Config) {
 	wg := &sync.WaitGroup{}
 	wg.Add(1)
 
-	go MonitorItems(ctx, nodeMonitor, time.Duration(config.LoggerConfig.Interval), 1000, wg, config.Nodes)
+	go MonitorItems(ctx, nodeMonitor, config.LoggerConfig.Interval, 1000, wg, config.Nodes)
 
 	wg.Add(1)
 

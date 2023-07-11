@@ -3,6 +3,7 @@ package opcua_monitor
 import (
 	"context"
 	"fmt"
+	"log"
 	"sync"
 	"time"
 
@@ -13,42 +14,37 @@ import (
 	"github.com/gopcua/opcua/monitor"
 )
 
-func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interval time.Duration, lag time.Duration, wg *sync.WaitGroup, nodes []setup.NodeObject) {
-	ch := make(chan *monitor.DataChangeMessage, 16)
-
-	logging.LogGeneric("debug", fmt.Sprint(nodes), "opcua")
-
+func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interval int, lag time.Duration, wg *sync.WaitGroup, nodes []setup.NodeObject) {
 	nodeArr := make([]string, 0)
 
 	for _, node := range nodes {
 		nodeArr = append(nodeArr, node.NodeId)
 	}
 
-	sub, err := nodeMonitor.ChanSubscribe(ctx, &opcua.SubscriptionParameters{Interval: interval * time.Second, Priority: 100}, ch, nodeArr...)
+	sub, err := nodeMonitor.Subscribe(
+		ctx,
+		&opcua.SubscriptionParameters{
+			Interval: time.Duration(interval) * time.Second,
+		},
+		func(s *monitor.Subscription, msg *monitor.DataChangeMessage) {
+			if msg.Error != nil {
+				logging.LogError(msg.Error, "Error with received subscription message", "opcua")
+			} else {
+				go exporter.PublishData(msg.NodeID.String(), msg.Value.Value(), msg.SourceTimestamp)
+				// log.Printf("[callback] sub=%d ts=%s node=%s value=%v", s.SubscriptionID(), msg.SourceTimestamp.UTC().Format(time.RFC3339), msg.NodeID, msg.Value.Value())
+			}
+			time.Sleep(lag)
+		},
+		nodeArr...)
 
 	if err != nil {
-		logging.LogError(err, "Error starting the subscription", "opcua")
+		log.Fatal(err)
 	}
 
 	defer cleanup(ctx, sub, wg)
 
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case msg := <-ch:
-			if msg.Error != nil {
-				logging.LogError(msg.Error, "Error with received subscription message", "opcua")
-			} else {
+	<-ctx.Done()
 
-				id := msg.NodeID.String()
-				logging.LogGeneric("debug", "Logged "+fmt.Sprint(msg.Value.Value())+" for "+id, "opcua")
-
-				go exporter.PublishData(id, msg.Value.Value(), msg.SourceTimestamp)
-			}
-			time.Sleep(lag)
-		}
-	}
 }
 
 func cleanup(ctx context.Context, sub *monitor.Subscription, wg *sync.WaitGroup) {
