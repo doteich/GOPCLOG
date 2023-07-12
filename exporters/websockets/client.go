@@ -59,7 +59,6 @@ func (c *Client) writeMessages() {
 			if err != nil {
 				return
 			}
-			fmt.Println("PING >>>")
 		}
 
 	}
@@ -115,7 +114,6 @@ func (c *Client) readMessages() {
 }
 
 func (c *Client) pongHandler(PongMsg string) error {
-	fmt.Println("<<< PONG")
 	return c.connection.SetReadDeadline(time.Now().Add(pongWait))
 }
 

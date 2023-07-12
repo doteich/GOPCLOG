@@ -36,6 +36,7 @@ func CreateOPCUAMonitor(config *setup.Config) {
 	connectionParams := SetClientOptions(config, ep)
 
 	opcclient = CreateClientConnection(config.ClientConfig.Url, connectionParams)
+
 	err := opcclient.Connect(ctx)
 
 	if err != nil {
