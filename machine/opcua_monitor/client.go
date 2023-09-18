@@ -45,6 +45,27 @@ func CreateOPCUAMonitor(config *setup.Config) {
 
 	defer opcclient.CloseSessionWithContext(ctx)
 
+	if config.AutoSubRoot.Enabled {
+		id, err := ua.ParseNodeID(config.AutoSubRoot.RootNode)
+		if err != nil {
+			logging.LogError(err, "Invalid node id", "opcua")
+		}
+
+		nodeList, err := browse(ctx, opcclient.Node(id), "", 0)
+		if err != nil {
+			logging.LogError(err, "Error while browsing nodes", "opcua")
+		}
+
+		for _, n := range nodeList {
+			config.Nodes = append(config.Nodes, setup.NodeObject{
+				NodeId:          n.NodeID.String(),
+				NodeName:        n.Path,
+				DataType:        n.DataType,
+				ExposeAsMetrics: true,
+			})
+		}
+	}
+
 	nodeMonitor, err := monitor.NewNodeMonitor(opcclient)
 
 	if err != nil {

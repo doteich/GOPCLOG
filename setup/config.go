@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	ClientConfig   ClientConfig `mapstructure:"opcConfig"`
+	AutoSubRoot    AutoSubRoot  `mapstructure:"autoSubRoot"`
 	Nodes          []NodeObject `mapstructure:"selectedTags"`
 	LoggerConfig   LoggerConfig `mapstructure:"methodConfig"`
 	ExporterConfig Exporters    `mapstructure:"exporters"`
@@ -23,6 +24,13 @@ type ClientConfig struct {
 	Node           string `mapstructure:"node"`
 	GenerateCert   bool   `mapstructure:"autoGenCert"`
 }
+
+type AutoSubRoot struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	Interval int    `mapstructure:"interval"`
+	RootNode string `mapstructure:"rootNode"`
+}
+
 type NodeObject struct {
 	NodeId          string `mapstructure:"nodeId"`
 	NodeName        string `mapstructure:"name"`
