@@ -40,6 +40,7 @@ type Exporters struct {
 	Rest       RestConfig       `mapstructure:"rest"`
 	Websockets WebsocketConfig  `mapstructure:"websockets"`
 	MongoDB    MongoDBConfig    `mapstructure:"mongodb"`
+	InfluxDB   InfluxDBConfig   `mapstructure:"influxdb"`
 }
 
 type PrometheusConfig struct {
@@ -56,6 +57,14 @@ type RestConfig struct {
 
 type WebsocketConfig struct {
 	Enabled bool `mapstructure:"enabled"`
+}
+
+type InfluxDBConfig struct {
+	Enabled          bool   `mapstructure:"enabled"`
+	ConnectionString string `mapstructure:"connectionString"`
+	Token            string `mapstructure:"token"`
+	Org              string `mapstructure:"org"`
+	Bucket           string `mapstructure:"bucket"`
 }
 
 type MongoDBConfig struct {

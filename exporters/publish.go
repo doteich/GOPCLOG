@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/doteich/OPC-UA-Logger/exporters/http_exporter"
+	"github.com/doteich/OPC-UA-Logger/exporters/influxdb"
 	"github.com/doteich/OPC-UA-Logger/exporters/logging"
 	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
 	"github.com/doteich/OPC-UA-Logger/exporters/mongodb"
@@ -18,6 +19,7 @@ type Exporters struct {
 	Prometheus bool
 	Websockets bool
 	MongoDB    bool
+	InfluxDB   bool
 }
 
 var EnabledExporters Exporters
@@ -53,6 +55,16 @@ func InitExporters(config *setup.Config) {
 		EnabledExporters.MongoDB = true
 	}
 
+	if config.ExporterConfig.InfluxDB.Enabled {
+		influxdb.CreateConnection(
+			namespace,
+			config.ExporterConfig.InfluxDB.Org,
+			config.ExporterConfig.InfluxDB.Bucket,
+			config.ExporterConfig.InfluxDB.ConnectionString,
+			config.ExporterConfig.InfluxDB.Token)
+		EnabledExporters.InfluxDB = true
+	}
+
 	go InitHTTPServer()
 
 }
@@ -85,6 +97,18 @@ func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 		mongodb.WriteData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType, namespace)
 	}
 
+	if EnabledExporters.InfluxDB {
+		influxdb.WriteData(
+			node.NodeId,
+			node.NodeName,
+			iface,
+			timestamp,
+			setup.PubConfig.LoggerConfig.Name,
+			setup.PubConfig.ClientConfig.Url,
+			dataType,
+			namespace,
+		)
+	}
 }
 
 func findNodeDetails(nodeId string) (setup.NodeObject, error) {
