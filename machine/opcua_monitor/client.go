@@ -10,6 +10,7 @@ import (
 	exporter "github.com/doteich/OPC-UA-Logger/exporters"
 	"github.com/doteich/OPC-UA-Logger/exporters/logging"
 	"github.com/doteich/OPC-UA-Logger/exporters/websockets"
+	"github.com/doteich/OPC-UA-Logger/global"
 	"github.com/doteich/OPC-UA-Logger/setup"
 	"github.com/gopcua/opcua"
 	"github.com/gopcua/opcua/monitor"
@@ -45,24 +46,26 @@ func CreateOPCUAMonitor(config *setup.Config) {
 
 	defer opcclient.CloseSessionWithContext(ctx)
 
-	if config.AutoSubRoot.Enabled {
-		id, err := ua.ParseNodeID(config.AutoSubRoot.RootNode)
-		if err != nil {
-			logging.LogError(err, "Invalid node id", "opcua")
-		}
+	for _, root := range config.AutoSubRoot {
+		if root.Enabled {
+			id, err := ua.ParseNodeID(root.RootNode)
+			if err != nil {
+				logging.LogError(err, "Invalid node id", "opcua")
+			}
 
-		nodeList, err := browse(ctx, opcclient.Node(id), "", 0)
-		if err != nil {
-			logging.LogError(err, "Error while browsing nodes", "opcua")
-		}
+			nodeList, err := browse(ctx, opcclient.Node(id), "", 0)
+			if err != nil {
+				logging.LogError(err, "Error while browsing nodes", "opcua")
+			}
 
-		for _, n := range nodeList {
-			config.Nodes = append(config.Nodes, setup.NodeObject{
-				NodeId:          n.NodeID.String(),
-				NodeName:        n.Path,
-				DataType:        n.DataType,
-				ExposeAsMetrics: true,
-			})
+			for _, n := range nodeList {
+				config.Nodes = append(config.Nodes, setup.NodeObject{
+					NodeId:          n.NodeID.String(),
+					NodeName:        n.Path,
+					DataType:        n.DataType,
+					ExposeAsMetrics: true,
+				})
+			}
 		}
 	}
 
@@ -74,6 +77,7 @@ func CreateOPCUAMonitor(config *setup.Config) {
 
 	websockets.InitOPCUARead(opcclient)
 	exporter.SetOPCUAClient(opcclient)
+	global.SetOPCUAClient(opcclient)
 
 	wg := &sync.WaitGroup{}
 	wg.Add(1)

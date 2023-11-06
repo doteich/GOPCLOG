@@ -3,6 +3,7 @@
 FROM golang:1.19-alpine3.16 as build
 WORKDIR /app
 COPY . .
+ENV GOPROXY https://goproxy.cn/
 RUN go build -o /gopclogs
 
 #Copy files from build, to slim down the overall image size

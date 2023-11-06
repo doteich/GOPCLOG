@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	ClientConfig   ClientConfig `mapstructure:"opcConfig"`
-	AutoSubRoot    AutoSubRoot  `mapstructure:"autoSubRoot"`
+	AutoSubRoot    []AutoSubRoot  `mapstructure:"autoSubRoot"`
 	Nodes          []NodeObject `mapstructure:"selectedTags"`
 	LoggerConfig   LoggerConfig `mapstructure:"methodConfig"`
 	ExporterConfig Exporters    `mapstructure:"exporters"`
@@ -86,7 +86,8 @@ type MongoDBConfig struct {
 var PubConfig Config
 
 func SetConfig() *Config {
-	viper.AddConfigPath("/etc/config")
+	// viper.AddConfigPath("/etc/config")
+	viper.AddConfigPath("./")
 	viper.SetConfigName("config")
 	viper.SetConfigType("json")
 	err := viper.ReadInConfig()
