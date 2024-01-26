@@ -13,7 +13,9 @@ func main() {
 	logging.InitLogger()
 
 	if config.ClientConfig.GenerateCert {
-		setup.CreateKeyPair()
+		if err := setup.CreateKeyPair(); err != nil {
+			panic(err)
+		}
 	}
 
 	exporter.InitExporters(config)
