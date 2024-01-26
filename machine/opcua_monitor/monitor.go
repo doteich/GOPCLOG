@@ -2,6 +2,7 @@ package opcua_monitor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -26,7 +27,12 @@ func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interva
 			if msg.Error != nil {
 				logging.LogError(msg.Error, "Error with received subscription message", "opcua")
 			} else {
-				go exporter.PublishData(msg.NodeID.String(), msg.Value.Value(), msg.SourceTimestamp)
+				if msg.Status == ua.StatusBad {
+					logging.LogError(errors.New("Received Status Code Bad"), "Error with received subscription message", "opcua")
+				} else {
+					go exporter.PublishData(msg.NodeID.String(), msg.Value.Value(), msg.SourceTimestamp)
+				}
+
 			}
 			time.Sleep(lag)
 		},
