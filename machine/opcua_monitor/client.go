@@ -101,7 +101,7 @@ func SetClientOptions(config *setup.Config, ep *ua.EndpointDescription) []opcua.
 
 	if config.ClientConfig.SecurityMode != "None" || config.ClientConfig.SecurityPolicy != "None" {
 		connectionParams = append(connectionParams, opcua.CertificateFile("./certs/cert.pem"))
-		connectionParams = append(connectionParams, opcua.PrivateKeyFile("./certs/private_key.pem"))
+		connectionParams = append(connectionParams, opcua.PrivateKeyFile("./certs/key.pem"))
 	}
 
 	switch config.ClientConfig.AuthType {

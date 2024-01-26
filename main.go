@@ -13,7 +13,7 @@ func main() {
 	logging.InitLogger()
 
 	if config.ClientConfig.GenerateCert {
-		setup.GeneratePEMFiles()
+		setup.CreateKeyPair()
 	}
 
 	exporter.InitExporters(config)
