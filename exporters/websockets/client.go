@@ -133,6 +133,10 @@ func ReadNodes(nodeId string) (interface{}, error) {
 		return nil, err
 	}
 
+	if resp.Results[0].Status == ua.StatusBad || resp.Results[0].Value == nil {
+		return nil, errors.New("Received Status Code Bad while reading")
+	}
+
 	return resp.Results[0].Value.Value(), nil
 
 }
