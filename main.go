@@ -1,6 +1,8 @@
 package main
 
 import (
+	"net/http"
+
 	exporter "github.com/doteich/OPC-UA-Logger/exporters"
 	"github.com/doteich/OPC-UA-Logger/exporters/logging"
 	"github.com/doteich/OPC-UA-Logger/machine/opcua_monitor"
@@ -20,6 +22,10 @@ func main() {
 
 	exporter.InitExporters(config)
 
-	opcua_monitor.CreateOPCUAMonitor(config)
+	go func() {
+		r := server()
+		http.ListenAndServe(":6000", r)
+	}()
 
+	opcua_monitor.CreateOPCUAMonitor(config)
 }

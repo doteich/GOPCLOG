@@ -8,6 +8,7 @@ import (
 
 type Config struct {
 	ClientConfig   ClientConfig `mapstructure:"opcConfig"`
+	AutoSubRoot    []AutoSubRoot  `mapstructure:"autoSubRoot"`
 	Nodes          []NodeObject `mapstructure:"selectedTags"`
 	LoggerConfig   LoggerConfig `mapstructure:"methodConfig"`
 	ExporterConfig Exporters    `mapstructure:"exporters"`
@@ -23,6 +24,13 @@ type ClientConfig struct {
 	Node           string `mapstructure:"node"`
 	GenerateCert   bool   `mapstructure:"autoGenCert"`
 }
+
+type AutoSubRoot struct {
+	Enabled  bool   `mapstructure:"enabled"`
+	Interval int    `mapstructure:"interval"`
+	RootNode string `mapstructure:"rootNode"`
+}
+
 type NodeObject struct {
 	NodeId          string `mapstructure:"nodeId"`
 	NodeName        string `mapstructure:"name"`
@@ -40,6 +48,7 @@ type Exporters struct {
 	Rest       RestConfig       `mapstructure:"rest"`
 	Websockets WebsocketConfig  `mapstructure:"websockets"`
 	MongoDB    MongoDBConfig    `mapstructure:"mongodb"`
+	InfluxDB   InfluxDBConfig   `mapstructure:"influxdb"`
 }
 
 type PrometheusConfig struct {
@@ -58,6 +67,14 @@ type WebsocketConfig struct {
 	Enabled bool `mapstructure:"enabled"`
 }
 
+type InfluxDBConfig struct {
+	Enabled          bool   `mapstructure:"enabled"`
+	ConnectionString string `mapstructure:"connectionString"`
+	Token            string `mapstructure:"token"`
+	Org              string `mapstructure:"org"`
+	Bucket           string `mapstructure:"bucket"`
+}
+
 type MongoDBConfig struct {
 	Enabled          bool   `mapstructure:"enabled"`
 	ConnectionType   string `mapstructure:"connectionType"`
@@ -69,7 +86,8 @@ type MongoDBConfig struct {
 var PubConfig Config
 
 func SetConfig() *Config {
-	viper.AddConfigPath("/etc/config")
+	// viper.AddConfigPath("/etc/config")
+	viper.AddConfigPath("./")
 	viper.SetConfigName("config")
 	viper.SetConfigType("json")
 	err := viper.ReadInConfig()
