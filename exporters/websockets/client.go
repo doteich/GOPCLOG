@@ -1,6 +1,7 @@
 package websockets
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -126,7 +127,7 @@ func ReadNodes(nodeId string) (interface{}, error) {
 			{NodeID: id},
 		},
 	}
-	resp, err := ws_opcclient.Read(obj)
+	resp, err := ws_opcclient.Read(context.Background(), obj)
 
 	if err != nil {
 		fmt.Printf("Error while reading %s", nodeId)
@@ -134,7 +135,7 @@ func ReadNodes(nodeId string) (interface{}, error) {
 	}
 
 	if resp.Results[0].Status == ua.StatusBad || resp.Results[0].Value == nil {
-		return nil, errors.New("Received Status Code Bad while reading")
+		return nil, errors.New("received status code bad while reading")
 	}
 
 	return resp.Results[0].Value.Value(), nil

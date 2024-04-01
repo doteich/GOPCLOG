@@ -16,7 +16,11 @@ import (
 	"github.com/gopcua/opcua/ua"
 )
 
-var opcclient *opcua.Client
+var (
+	opcclient   *opcua.Client
+	Subs        map[uint32]*monitor.Subscription
+	NodeMonitor *monitor.NodeMonitor
+)
 
 func CreateOPCUAMonitor(config *setup.Config) {
 	signalCh := make(chan os.Signal, 1)
@@ -35,17 +39,25 @@ func CreateOPCUAMonitor(config *setup.Config) {
 
 	connectionParams := SetClientOptions(config, ep)
 
-	opcclient = CreateClientConnection(config.ClientConfig.Url, connectionParams)
+	var e error
+
+	opcclient, e = CreateClientConnection(config.ClientConfig.Url, connectionParams)
+
+	if e != nil {
+		logging.LogError(e, "error while creating opc client", "opcua")
+		return
+	}
 
 	err := opcclient.Connect(ctx)
 
 	if err != nil {
 		logging.LogError(err, "Error connecting to opcua server", "opcua")
+		return
 	}
 
-	defer opcclient.CloseSessionWithContext(ctx)
+	defer opcclient.CloseSession(ctx)
 
-	nodeMonitor, err := monitor.NewNodeMonitor(opcclient)
+	NodeMonitor, err = monitor.NewNodeMonitor(opcclient)
 
 	if err != nil {
 		logging.LogError(err, "Error while setting up the node monitor", "opcua")
@@ -55,13 +67,13 @@ func CreateOPCUAMonitor(config *setup.Config) {
 	exporter.SetOPCUAClient(opcclient)
 
 	wg := &sync.WaitGroup{}
+
+	go MonitorItems(ctx, NodeMonitor, config.LoggerConfig.Interval, 1000, config.Nodes)
+	go StartKeepAlive(ctx, NodeMonitor, 1000)
+
 	wg.Add(1)
 
-	go MonitorItems(ctx, nodeMonitor, config.LoggerConfig.Interval, 1000, wg, config.Nodes)
-
-	wg.Add(1)
-
-	go StartKeepAlive(ctx, nodeMonitor, 1000, wg)
+	MonitorSubscriptions(ctx, wg, config.LoggerConfig.Interval, config.Nodes)
 
 	<-ctx.Done()
 
@@ -119,7 +131,7 @@ func SetClientOptions(config *setup.Config, ep *ua.EndpointDescription) []opcua.
 	return connectionParams
 }
 
-func CreateClientConnection(ep string, options []opcua.Option) *opcua.Client {
+func CreateClientConnection(ep string, options []opcua.Option) (*opcua.Client, error) {
 
 	return opcua.NewClient(ep, options...)
 

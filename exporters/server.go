@@ -1,6 +1,7 @@
 package exporter
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"time"
@@ -110,7 +111,7 @@ func ReadNodes(nodeId string) (interface{}, error) {
 			{NodeID: id},
 		},
 	}
-	resp, err := http_opcclient.Read(obj)
+	resp, err := http_opcclient.Read(context.Background(), obj)
 
 	if err != nil {
 		logging.LogError(err, "Error while reading"+nodeId, "exporter")
