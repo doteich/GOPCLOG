@@ -16,7 +16,16 @@ import (
 	"github.com/gopcua/opcua/ua"
 )
 
-var opcclient *opcua.Client
+type s_struct struct {
+	sub   *monitor.Subscription
+	tChan chan bool
+}
+
+var (
+	opcclient   *opcua.Client
+	Subs        map[uint32]s_struct
+	NodeMonitor *monitor.NodeMonitor
+)
 
 func CreateOPCUAMonitor(config *setup.Config) {
 	signalCh := make(chan os.Signal, 1)
@@ -35,17 +44,25 @@ func CreateOPCUAMonitor(config *setup.Config) {
 
 	connectionParams := SetClientOptions(config, ep)
 
-	opcclient = CreateClientConnection(config.ClientConfig.Url, connectionParams)
+	var e error
+
+	opcclient, e = CreateClientConnection(config.ClientConfig.Url, connectionParams)
+
+	if e != nil {
+		logging.LogError(e, "error while creating opc client", "opcua")
+		return
+	}
 
 	err := opcclient.Connect(ctx)
 
 	if err != nil {
 		logging.LogError(err, "Error connecting to opcua server", "opcua")
+		return
 	}
 
-	defer opcclient.CloseSessionWithContext(ctx)
+	defer opcclient.CloseSession(ctx)
 
-	nodeMonitor, err := monitor.NewNodeMonitor(opcclient)
+	NodeMonitor, err = monitor.NewNodeMonitor(opcclient)
 
 	if err != nil {
 		logging.LogError(err, "Error while setting up the node monitor", "opcua")
@@ -55,20 +72,23 @@ func CreateOPCUAMonitor(config *setup.Config) {
 	exporter.SetOPCUAClient(opcclient)
 
 	wg := &sync.WaitGroup{}
+	Subs = make(map[uint32]s_struct)
+
+	go MonitorItems(ctx, NodeMonitor, config.LoggerConfig.Interval, 1000, config.Nodes, make(chan bool))
+	go StartKeepAlive(ctx, NodeMonitor, 1000, make(chan bool))
+
 	wg.Add(1)
 
-	go MonitorItems(ctx, nodeMonitor, config.LoggerConfig.Interval, 1000, wg, config.Nodes)
+	go MonitorSubscriptions(ctx, wg, config.LoggerConfig.Interval, config.Nodes)
 
-	wg.Add(1)
+	//<-ctx.Done()
 
-	go StartKeepAlive(ctx, nodeMonitor, 1000, wg)
-
-	<-ctx.Done()
+	wg.Wait()
 
 	defer func() {
-		logging.LogGeneric("warning", "Shutting down opuca monitor", "opcua")
+		logging.LogGeneric("warning", "Shutting down opcua monitor", "opcua")
 	}()
-	wg.Wait()
+
 }
 
 func ValidateEndpoint(ctx context.Context, endpoint string, policy string, mode string) *ua.EndpointDescription {
@@ -119,7 +139,7 @@ func SetClientOptions(config *setup.Config, ep *ua.EndpointDescription) []opcua.
 	return connectionParams
 }
 
-func CreateClientConnection(ep string, options []opcua.Option) *opcua.Client {
+func CreateClientConnection(ep string, options []opcua.Option) (*opcua.Client, error) {
 
 	return opcua.NewClient(ep, options...)
 

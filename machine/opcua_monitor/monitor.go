@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	exporter "github.com/doteich/OPC-UA-Logger/exporters"
@@ -15,7 +14,7 @@ import (
 	"github.com/gopcua/opcua/ua"
 )
 
-func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interval int, lag time.Duration, wg *sync.WaitGroup, nodes []setup.NodeObject) {
+func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interval int, lag time.Duration, nodes []setup.NodeObject, tChan chan bool) {
 
 	sub, err := nodeMonitor.Subscribe(
 		ctx,
@@ -38,27 +37,32 @@ func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interva
 		},
 	)
 
-	for _, node := range nodes {
-		_, err := sub.AddMonitorItemsWithContext(ctx, monitor.Request{NodeID: ua.MustParseNodeID(node.NodeId), MonitoringParameters: &ua.MonitoringParameters{QueueSize: 1, SamplingInterval: 1000}, MonitoringMode: ua.MonitoringModeReporting})
-		if err != nil {
-			logging.LogError(err, "Error while adding node to subscription- node:"+node.NodeId, "opcua")
-		}
-	}
-
 	if err != nil {
 		logging.LogError(err, "Error with subscription", "opcua")
 		return
 	}
 
-	defer cleanup(ctx, sub, wg)
+	for _, node := range nodes {
+		_, err := sub.AddMonitorItems(ctx, monitor.Request{NodeID: ua.MustParseNodeID(node.NodeId), MonitoringParameters: &ua.MonitoringParameters{QueueSize: 1, SamplingInterval: 1000}, MonitoringMode: ua.MonitoringModeReporting})
+		if err != nil {
+			logging.LogError(err, "Error while adding node to subscription- node:"+node.NodeId, "opcua")
+			continue
+		}
+	}
 
-	<-ctx.Done()
+	id := sub.SubscriptionID()
+
+	Subs[id] = s_struct{sub: sub, tChan: tChan}
+
+	logging.LogGeneric("info", "Starting Subscription with id: "+fmt.Sprint(id), "opcua")
+
+	defer cleanup(sub)
+
+	<-tChan
 
 }
 
-func cleanup(ctx context.Context, sub *monitor.Subscription, wg *sync.WaitGroup) {
+func cleanup(sub *monitor.Subscription) {
 
-	fmt.Printf("stats: sub=%d delivered=%d dropped=%d", sub.SubscriptionID(), sub.Delivered(), sub.Dropped())
-	sub.Unsubscribe(ctx)
-	wg.Done()
+	fmt.Printf("stats: sub=%d delivered=%d dropped=%d \n", sub.SubscriptionID(), sub.Delivered(), sub.Dropped())
 }
