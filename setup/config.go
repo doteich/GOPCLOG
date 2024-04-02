@@ -69,7 +69,7 @@ type MongoDBConfig struct {
 var PubConfig Config
 
 func SetConfig() *Config {
-	viper.AddConfigPath("C:/Temp/config")
+	viper.AddConfigPath("/etc/config")
 	viper.SetConfigName("config")
 	viper.SetConfigType("json")
 	err := viper.ReadInConfig()
