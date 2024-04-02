@@ -16,9 +16,14 @@ import (
 	"github.com/gopcua/opcua/ua"
 )
 
+type s_struct struct {
+	sub   *monitor.Subscription
+	tChan chan bool
+}
+
 var (
 	opcclient   *opcua.Client
-	Subs        map[uint32]*monitor.Subscription
+	Subs        map[uint32]s_struct
 	NodeMonitor *monitor.NodeMonitor
 )
 
@@ -67,20 +72,23 @@ func CreateOPCUAMonitor(config *setup.Config) {
 	exporter.SetOPCUAClient(opcclient)
 
 	wg := &sync.WaitGroup{}
+	Subs = make(map[uint32]s_struct)
 
-	go MonitorItems(ctx, NodeMonitor, config.LoggerConfig.Interval, 1000, config.Nodes)
-	go StartKeepAlive(ctx, NodeMonitor, 1000)
+	go MonitorItems(ctx, NodeMonitor, config.LoggerConfig.Interval, 1000, config.Nodes, make(chan bool))
+	go StartKeepAlive(ctx, NodeMonitor, 1000, make(chan bool))
 
 	wg.Add(1)
 
-	MonitorSubscriptions(ctx, wg, config.LoggerConfig.Interval, config.Nodes)
+	go MonitorSubscriptions(ctx, wg, config.LoggerConfig.Interval, config.Nodes)
 
-	<-ctx.Done()
+	//<-ctx.Done()
+
+	wg.Wait()
 
 	defer func() {
-		logging.LogGeneric("warning", "Shutting down opuca monitor", "opcua")
+		logging.LogGeneric("warning", "Shutting down opcua monitor", "opcua")
 	}()
-	wg.Wait()
+
 }
 
 func ValidateEndpoint(ctx context.Context, endpoint string, policy string, mode string) *ua.EndpointDescription {

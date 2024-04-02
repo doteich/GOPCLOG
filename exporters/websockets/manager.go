@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/doteich/OPC-UA-Logger/exporters/logging"
 	"github.com/gorilla/websocket"
 )
 
@@ -42,7 +43,8 @@ func (m *Manager) ServeWS(w http.ResponseWriter, r *http.Request) {
 	newClient := SetNewClient(connection, m)
 
 	m.addClient(newClient)
-	fmt.Println("New Client added")
+
+	logging.LogGeneric("debug", "new websocket client added", "websocket")
 
 	go newClient.writeMessages()
 	go newClient.readMessages()

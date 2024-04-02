@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/doteich/OPC-UA-Logger/exporters/logging"
 	"github.com/doteich/OPC-UA-Logger/setup"
 	"github.com/gopcua/opcua/ua"
 	"github.com/gorilla/websocket"
@@ -80,7 +81,7 @@ func (c *Client) readMessages() {
 
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				fmt.Printf("error reading message: %v", err)
+				logging.LogError(err, "error reading message", "websocket")
 			}
 
 			break
@@ -91,7 +92,7 @@ func (c *Client) readMessages() {
 		err = json.Unmarshal(payload, &inboundMsg)
 
 		if err != nil {
-			fmt.Println(err)
+			logging.LogError(err, "error while unmashaling inbound message", "websocket")
 
 		}
 
@@ -130,7 +131,7 @@ func ReadNodes(nodeId string) (interface{}, error) {
 	resp, err := ws_opcclient.Read(context.Background(), obj)
 
 	if err != nil {
-		fmt.Printf("Error while reading %s", nodeId)
+		logging.LogError(err, "error while reading nodeid: "+nodeId, "websocket")
 		return nil, err
 	}
 

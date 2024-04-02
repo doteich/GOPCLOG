@@ -14,7 +14,7 @@ import (
 	"github.com/gopcua/opcua/ua"
 )
 
-func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interval int, lag time.Duration, nodes []setup.NodeObject) {
+func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interval int, lag time.Duration, nodes []setup.NodeObject, tChan chan bool) {
 
 	sub, err := nodeMonitor.Subscribe(
 		ctx,
@@ -52,17 +52,17 @@ func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interva
 
 	id := sub.SubscriptionID()
 
-	Subs[id] = sub
+	Subs[id] = s_struct{sub: sub, tChan: tChan}
 
-	defer cleanup(ctx, sub)
+	logging.LogGeneric("info", "Starting Subscription with id: "+fmt.Sprint(id), "opcua")
 
-	<-ctx.Done()
+	defer cleanup(sub)
+
+	<-tChan
 
 }
 
-func cleanup(ctx context.Context, sub *monitor.Subscription) {
+func cleanup(sub *monitor.Subscription) {
 
-	fmt.Printf("stats: sub=%d delivered=%d dropped=%d", sub.SubscriptionID(), sub.Delivered(), sub.Dropped())
-	sub.Unsubscribe(ctx)
-
+	fmt.Printf("stats: sub=%d delivered=%d dropped=%d \n", sub.SubscriptionID(), sub.Delivered(), sub.Dropped())
 }
