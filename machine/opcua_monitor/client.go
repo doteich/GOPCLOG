@@ -16,14 +16,9 @@ import (
 	"github.com/gopcua/opcua/ua"
 )
 
-type s_struct struct {
-	sub   *monitor.Subscription
-	tChan chan bool
-}
-
 var (
 	opcclient   *opcua.Client
-	Subs        map[uint32]s_struct
+	Subs        map[uint32]*monitor.Subscription
 	NodeMonitor *monitor.NodeMonitor
 )
 
@@ -72,14 +67,12 @@ func CreateOPCUAMonitor(config *setup.Config) {
 	exporter.SetOPCUAClient(opcclient)
 
 	wg := &sync.WaitGroup{}
-	Subs = make(map[uint32]s_struct)
-
-	go MonitorItems(ctx, NodeMonitor, config.LoggerConfig.Interval, 1000, config.Nodes, make(chan bool))
-	go StartKeepAlive(ctx, NodeMonitor, 1000, make(chan bool))
+	Subs = make(map[uint32]*monitor.Subscription)
 
 	wg.Add(1)
+	t := time.NewTicker(30 * time.Second)
 
-	go MonitorSubscriptions(ctx, wg, config.LoggerConfig.Interval, config.Nodes)
+	go ConnectionCheck(ctx, t, wg, config)
 
 	//<-ctx.Done()
 
@@ -142,5 +135,49 @@ func SetClientOptions(config *setup.Config, ep *ua.EndpointDescription) []opcua.
 func CreateClientConnection(ep string, options []opcua.Option) (*opcua.Client, error) {
 
 	return opcua.NewClient(ep, options...)
+
+}
+
+func InitSubs(pctx context.Context, ctx context.Context, conf *setup.Config) error {
+	m, err := monitor.NewNodeMonitor(opcclient)
+
+	if err != nil {
+		return err
+	}
+
+	go StartKeepAlive(pctx, ctx, m)
+	go MonitorItems(pctx, ctx, m, conf.LoggerConfig.Interval, 1000, conf.Nodes)
+
+	return nil
+
+}
+
+func ConnectionCheck(ctx context.Context, t *time.Ticker, wg *sync.WaitGroup, conf *setup.Config) {
+	var sub_ctx context.Context
+	var cancel func()
+
+	sub_ctx, cancel = context.WithCancel(ctx)
+
+	InitSubs(ctx, sub_ctx, conf)
+
+	for {
+		select {
+		case <-t.C:
+			diff := time.Since(last_keepalive).Seconds()
+
+			if diff > 60 {
+				logging.LogGeneric("warning", "received last keepalive message more than 60 s ago - reinit subs", "submonitor")
+				cancel()
+				time.Sleep(10 * time.Second)
+				sub_ctx, cancel = context.WithCancel(ctx)
+				InitSubs(ctx, sub_ctx, conf)
+			}
+
+		case <-ctx.Done():
+			cancel()
+			wg.Done()
+			return
+		}
+	}
 
 }
