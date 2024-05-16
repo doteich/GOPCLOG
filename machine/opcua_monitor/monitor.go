@@ -14,9 +14,9 @@ import (
 	"github.com/gopcua/opcua/ua"
 )
 
-func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interval int, lag time.Duration, nodes []setup.NodeObject, tChan chan bool) {
+func MonitorItems(pctx context.Context, ctx context.Context, m *monitor.NodeMonitor, interval int, lag time.Duration, nodes []setup.NodeObject) {
 
-	sub, err := nodeMonitor.Subscribe(
+	sub, err := m.Subscribe(
 		ctx,
 		&opcua.SubscriptionParameters{
 			Interval: time.Duration(interval) * time.Second,
@@ -27,7 +27,7 @@ func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interva
 				logging.LogError(msg.Error, "Error with received subscription message", "opcua")
 			} else {
 				if msg.Status == ua.StatusBad {
-					logging.LogError(errors.New("Received Status Code Bad"), "Error with received subscription message", "opcua")
+					logging.LogError(errors.New("received status Code bad"), "error with received subscription message", "opcua")
 				} else {
 					go exporter.PublishData(msg.NodeID.String(), msg.Value.Value(), msg.SourceTimestamp)
 				}
@@ -52,17 +52,18 @@ func MonitorItems(ctx context.Context, nodeMonitor *monitor.NodeMonitor, interva
 
 	id := sub.SubscriptionID()
 
-	Subs[id] = s_struct{sub: sub, tChan: tChan}
+	Subs[id] = sub
 
 	logging.LogGeneric("info", "Starting Subscription with id: "+fmt.Sprint(id), "opcua")
 
-	defer cleanup(sub)
+	defer TerminateSub(pctx, sub, id)
 
-	<-tChan
+	<-ctx.Done()
 
 }
 
-func cleanup(sub *monitor.Subscription) {
-
-	fmt.Printf("stats: sub=%d delivered=%d dropped=%d \n", sub.SubscriptionID(), sub.Delivered(), sub.Dropped())
+func TerminateSub(ctx context.Context, s *monitor.Subscription, id uint32) {
+	logging.LogGeneric("info", fmt.Sprintf("terminating subscription with id: %d - delivered: %d - dropped: %d", id, s.Delivered(), s.Dropped()), "terminate_sub")
+	delete(Subs, id)
+	s.Unsubscribe(ctx)
 }
