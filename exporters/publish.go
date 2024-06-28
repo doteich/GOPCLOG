@@ -71,8 +71,7 @@ func PublishData(nodeId string, iface interface{}, timestamp time.Time) {
 		http_exporter.PostLoggedData(node.NodeId, node.NodeName, iface, timestamp, setup.PubConfig.LoggerConfig.Name, setup.PubConfig.ClientConfig.Url, dataType)
 	}
 
-	if EnabledExporters.Prometheus && (dataType != "bool" && dataType != "string") {
-
+	if EnabledExporters.Prometheus && dataType != "string" {
 		metrics_exporter.SetMetricsValue(node.MetricsType, nodeId, node.NodeName, metricsValue)
 	}
 
@@ -131,6 +130,11 @@ func InferDataType(iface interface{}) (string, float64) {
 	case string:
 		dataType = "string"
 	case bool:
+		if v {
+			metricsValue = 1
+		} else {
+			metricsValue = 0
+		}
 		dataType = "bool"
 	}
 
