@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/doteich/OPC-UA-Logger/exporters/logging"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
@@ -54,9 +55,26 @@ func CreateConnection(namespace string, username string, password string, connec
 		panic(err)
 	}
 
-	opts := options.CreateCollection().SetTimeSeriesOptions(options.TimeSeries().SetGranularity("seconds").SetMetaField("meta").SetTimeField("ts"))
+	opts := options.CreateCollection().SetTimeSeriesOptions(options.TimeSeries().SetGranularity("seconds").SetMetaField("meta").SetTimeField("ts")).SetExpireAfterSeconds(2419200) // Expiration of Data after 4 weeks
 
 	MongoClient.Database("machine-data").CreateCollection(ctx, namespace, opts)
+
+	col := MongoClient.Database("machine-data").Collection(namespace)
+
+	idx := []mongo.IndexModel{
+		{
+			Keys: bson.D{
+				{Key: "meta.nodeName", Value: 1},
+				{Key: "ts", Value: -1},
+			},
+		},
+	}
+
+	_, err = col.Indexes().CreateMany(ctx, idx)
+	if err != nil {
+		logging.LogError(err, "Failed to create index", "mongodb")
+		panic(err)
+	}
 
 	logging.LogGeneric("info", "Successfully connected and pinged mongodb: "+connectionString, "mongodb")
 
