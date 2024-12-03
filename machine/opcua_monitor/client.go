@@ -2,13 +2,12 @@ package opcua_monitor
 
 import (
 	"context"
-	"os"
-	"os/signal"
-	"sync"
+	"fmt"
 	"time"
 
 	exporter "github.com/doteich/OPC-UA-Logger/exporters"
 	"github.com/doteich/OPC-UA-Logger/exporters/logging"
+	"github.com/doteich/OPC-UA-Logger/exporters/metrics_exporter"
 	"github.com/doteich/OPC-UA-Logger/exporters/websockets"
 	"github.com/doteich/OPC-UA-Logger/setup"
 	"github.com/gopcua/opcua"
@@ -17,88 +16,53 @@ import (
 )
 
 var (
-	opcclient   *opcua.Client
-	Subs        map[uint32]*monitor.Subscription
-	NodeMonitor *monitor.NodeMonitor
+	opcclient *opcua.Client
+	Subs      map[uint32]*monitor.Subscription
 )
 
-func CreateOPCUAMonitor(config *setup.Config) {
-	signalCh := make(chan os.Signal, 1)
-	signal.Notify(signalCh, os.Interrupt)
+func CreateOPCUAMonitor(ctx context.Context, config *setup.Config) error {
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	ep, err := ValidateEndpoint(ctx, config.ClientConfig.Url, config.ClientConfig.SecurityPolicy, config.ClientConfig.SecurityMode)
 
-	go func() {
-		<-signalCh
-		println()
-		cancel()
-	}()
-
-	ep := ValidateEndpoint(ctx, config.ClientConfig.Url, config.ClientConfig.SecurityPolicy, config.ClientConfig.SecurityMode)
+	if err != nil {
+		return fmt.Errorf("no matching endpoint found - check configuration: %s", err.Error())
+	}
 
 	connectionParams := SetClientOptions(config, ep)
 
-	var e error
-
-	opcclient, e = CreateClientConnection(config.ClientConfig.Url, connectionParams)
-
-	if e != nil {
-		logging.LogError(e, "error while creating opc client", "opcua")
-		return
-	}
-
-	err := opcclient.Connect(ctx)
+	opcclient, err = CreateClientConnection(config.ClientConfig.Url, connectionParams)
 
 	if err != nil {
-		logging.LogError(err, "Error connecting to opcua server", "opcua")
-		return
+		return fmt.Errorf("error while creating opc client: %s", err.Error())
 	}
 
-	defer opcclient.CloseSession(ctx)
-
-	NodeMonitor, err = monitor.NewNodeMonitor(opcclient)
+	err = opcclient.Connect(ctx)
 
 	if err != nil {
-		logging.LogError(err, "Error while setting up the node monitor", "opcua")
+		return fmt.Errorf("error connecting to opcua server: %s", err.Error())
 	}
 
 	websockets.InitOPCUARead(opcclient)
 	exporter.SetOPCUAClient(opcclient)
 
-	wg := &sync.WaitGroup{}
-	Subs = make(map[uint32]*monitor.Subscription)
-
-	wg.Add(1)
-	t := time.NewTicker(30 * time.Second)
-
-	go ConnectionCheck(ctx, t, wg, config)
-
-	//<-ctx.Done()
-
-	wg.Wait()
-
-	defer func() {
-		logging.LogGeneric("warning", "Shutting down opcua monitor", "opcua")
-	}()
+	return nil
 
 }
 
-func ValidateEndpoint(ctx context.Context, endpoint string, policy string, mode string) *ua.EndpointDescription {
+func ValidateEndpoint(ctx context.Context, endpoint string, policy string, mode string) (*ua.EndpointDescription, error) {
 	endpoints, err := opcua.GetEndpoints(ctx, endpoint)
 
 	if err != nil {
-		logging.LogError(err, "No Matching Endpoint Found - Check Configuration", "opcua")
+		return nil, err
 	}
 
 	ep := opcua.SelectEndpoint(endpoints, policy, ua.MessageSecurityModeFromString(mode))
 
 	if ep == nil {
-		logging.LogError(nil, "No Matching Endpoint Found - Check Configuration", "opcua")
-		panic("No Matching Endpoint Found - Check Configuration")
+		return nil, err
 	}
 
-	return ep
+	return ep, nil
 
 }
 
@@ -152,32 +116,83 @@ func InitSubs(pctx context.Context, ctx context.Context, conf *setup.Config) err
 
 }
 
-func ConnectionCheck(ctx context.Context, t *time.Ticker, wg *sync.WaitGroup, conf *setup.Config) {
+func CreateConnectionWatcher(ctx context.Context, t *time.Ticker, conf *setup.Config) {
+	Subs = make(map[uint32]*monitor.Subscription)
 	var sub_ctx context.Context
 	var cancel func()
 
 	sub_ctx, cancel = context.WithCancel(ctx)
 
-	InitSubs(ctx, sub_ctx, conf)
+	if err := CreateOPCUAMonitor(ctx, conf); err != nil {
+		logging.LogError(err, "error initializing watcher", "opcua")
+		return
+	}
+	if err := InitSubs(ctx, sub_ctx, conf); err != nil {
+		logging.LogError(err, "error initializing watcher monitor", "opcua")
+		return
+	}
+	last_keepalive = time.Now()
+	metrics_exporter.LogReconnects(conf.ClientConfig.Url)
 
 	for {
+
 		select {
 		case <-t.C:
 			diff := time.Since(last_keepalive).Seconds()
 
 			if diff > 60 {
 				logging.LogGeneric("warning", "received last keepalive message more than 60 s ago - reinit subs", "submonitor")
+				metrics_exporter.LogReconnects(conf.ClientConfig.Url)
 				cancel()
+				if err := opcclient.Close(ctx); err != nil {
+					logging.LogError(err, "error closing opc ua client connection on reconnect", "opcua")
+				}
 				time.Sleep(10 * time.Second)
 				sub_ctx, cancel = context.WithCancel(ctx)
+
+				if err := CreateOPCUAMonitor(ctx, conf); err != nil {
+					logging.LogError(err, "error while reestablishing opc ua client connection", "opcua")
+					continue
+				}
+
 				InitSubs(ctx, sub_ctx, conf)
 			}
-
 		case <-ctx.Done():
+			logging.LogGeneric("warning", "shutting down due to context cancel", "opcua")
 			cancel()
-			wg.Done()
-			return
+			opcclient.Close(ctx)
 		}
+
 	}
 
 }
+
+// func ConnectionCheck(ctx context.Context, t *time.Ticker, wg *sync.WaitGroup, conf *setup.Config) {
+// 	var sub_ctx context.Context
+// 	var cancel func()
+
+// 	sub_ctx, cancel = context.WithCancel(ctx)
+
+// 	InitSubs(ctx, sub_ctx, conf)
+
+// 	for {
+// 		select {
+// 		case <-t.C:
+// 			diff := time.Since(last_keepalive).Seconds()
+
+// 			if diff > 60 {
+// 				logging.LogGeneric("warning", "received last keepalive message more than 60 s ago - reinit subs", "submonitor")
+// 				cancel()
+// 				time.Sleep(10 * time.Second)
+// 				sub_ctx, cancel = context.WithCancel(ctx)
+// 				InitSubs(ctx, sub_ctx, conf)
+// 			}
+
+// 		case <-ctx.Done():
+// 			cancel()
+// 			wg.Done()
+// 			return
+// 		}
+// 	}
+
+// }
